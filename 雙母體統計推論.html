@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>第10章：雙母體統計推論</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jstat@1.9.6/dist/jstat.min.js"></script>
+  <style>
+    :root{
+      --p:#1a6eb5;--s:#e8f0fb;--acc:#e74c3c;
+      --g:#27ae60;--o:#e67e22;--pu:#8e44ad;--dk:#2c3e50;
+      --li:#f4f7fb;--da:#1c2b3a;--bo:#c5d5e8;
+      --sh:0 4px 18px rgba(30,80,160,.10);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI','微軟正黑體',Arial,sans-serif;background:var(--li);color:var(--da);line-height:1.7;}
+    /* Header */
+    header{background:linear-gradient(135deg,#1a6eb5,#0d3f6e);color:#fff;padding:40px 24px 30px;text-align:center;}
+    header h1{font-size:2rem;letter-spacing:2px;margin-bottom:6px;}
+    header p{font-size:.95rem;opacity:.85;}
+    /* Nav */
+    nav{background:#fff;border-bottom:2px solid var(--bo);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:10px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+    nav a{text-decoration:none;color:var(--p);font-weight:700;padding:5px 13px;border-radius:20px;border:1.5px solid var(--bo);font-size:.83rem;transition:all .2s;white-space:nowrap;}
+    nav a:hover{background:var(--p);color:#fff;border-color:var(--p);}
+    /* Main */
+    main{max-width:980px;margin:0 auto;padding:32px 16px 64px;}
+    /* Section */
+    .sec{background:#fff;border-radius:14px;box-shadow:var(--sh);padding:30px 26px;margin-bottom:34px;border-left:5px solid var(--p);}
+    .sec.so{border-left-color:var(--o);}
+    .sec.sg{border-left-color:var(--g);}
+    .sec.sp{border-left-color:var(--pu);}
+    .sec.sd{border-left-color:var(--dk);}
+    .sec h2{font-size:1.3rem;color:var(--p);margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .sec.so h2{color:var(--o);}.sec.sg h2{color:var(--g);}.sec.sp h2{color:var(--pu);}.sec.sd h2{color:var(--dk);}
+    /* Badge */
+    .badge{color:#fff;border-radius:7px;padding:2px 11px;font-size:.8rem;font-weight:700;letter-spacing:1px;background:var(--p);}
+    .bo2{background:var(--o);}.bg{background:var(--g);}.bp{background:var(--pu);}.bd{background:var(--dk);}
+    /* Highlight */
+    .hb{border-left:4px solid var(--p);border-radius:8px;padding:13px 16px;margin:14px 0;font-size:.95rem;background:var(--s);}
+    .hbo{background:#fdf3e7;border-color:var(--o);}
+    .hbr{background:#fdecea;border-color:var(--acc);}
+    .hbg{background:#eafaf1;border-color:var(--g);}
+    .hbp{background:#f5eef8;border-color:var(--pu);}
+    /* Formula box */
+    .fb{background:#1c2b3a;color:#e8f0fb;border-radius:10px;padding:18px 22px;margin:14px 0;text-align:center;}
+    .fb .fl{font-size:.78rem;color:#8eb8e0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+    .fb .fm{font-size:1.2rem;color:#fff;font-family:'Courier New',monospace;margin:6px 0;}
+    .fb .fn{font-size:.82rem;color:#8eb8e0;margin-top:8px;}
+    /* Grid 2 */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0;}
+    @media(max-width:620px){.g2,.g3{grid-template-columns:1fr;}}
+    /* Cards */
+    .card{border-radius:11px;padding:16px;border:2px solid;}
+    .cb{border-color:var(--p);background:var(--s);}
+    .co{border-color:var(--o);background:#fdf3e7;}
+    .cg{border-color:var(--g);background:#eafaf1;}
+    .card h3{font-size:1rem;margin-bottom:8px;}
+    .cb h3{color:var(--p);}.co h3{color:var(--o);}.cg h3{color:var(--g);}
+    /* Calculator */
+    .calc{background:linear-gradient(135deg,#f8fbff,#eef4fd);border:2px solid var(--p);border-radius:14px;padding:22px;margin:18px 0;}
+    .calc.co2{border-color:var(--o);background:linear-gradient(135deg,#fffaf5,#fdf3e7);}
+    .calc.cg2{border-color:var(--g);background:linear-gradient(135deg,#f5fff8,#eafaf1);}
+    .calc h3{color:var(--p);font-size:1rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+    .calc.co2 h3{color:var(--o);}.calc.cg2 h3{color:var(--g);}
+    .cicon{color:#fff;width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0;}
+    .cicon.bp2{background:var(--p);}.cicon.bo2{background:var(--o);}.cicon.bg2{background:var(--g);}
+    .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:14px;}
+    .cinp label{display:block;font-size:.8rem;font-weight:600;color:#4a6080;margin-bottom:3px;}
+    .cinp input,.cinp select{width:100%;padding:7px 10px;border:1.5px solid var(--bo);border-radius:7px;font-size:.93rem;background:#fff;transition:border-color .2s;}
+    .cinp input:focus,.cinp select:focus{outline:none;border-color:var(--p);}
+    .cbtn{color:#fff;border:none;border-radius:9px;padding:9px 26px;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;margin-bottom:14px;}
+    .cbtn.bp2{background:var(--p);}.cbtn.bp2:hover{background:#0d3f6e;}
+    .cbtn.bo2{background:var(--o);}.cbtn.bo2:hover{background:#c0682a;}
+    .cbtn.bg2{background:var(--g);}.cbtn.bg2:hover{background:#1e8449;}
+    .cres{background:#fff;border:1.5px solid var(--bo);border-radius:9px;padding:14px;margin:10px 0;display:none;}
+    .cres.show{display:block;}
+    .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:10px;}
+    .ritem{text-align:center;background:var(--li);border-radius:7px;padding:9px;}
+    .ritem .rl{font-size:.76rem;color:#666;margin-bottom:3px;}
+    .ritem .rv{font-size:1.15rem;font-weight:700;color:var(--p);}
+    .dbox{text-align:center;border-radius:9px;padding:11px 14px;font-weight:700;font-size:.95rem;margin-top:8px;}
+    .dbox.rj{background:#fdecea;color:var(--acc);border:2px solid var(--acc);}
+    .dbox.nr{background:#eafaf1;color:var(--g);border:2px solid var(--g);}
+    /* Canvas */
+    .cw{position:relative;height:200px;margin:14px 0;}
+    /* CI Line canvas */
+    .ci-canvas{width:100%;height:80px;border-radius:8px;background:#f8fbff;border:1.5px solid var(--bo);display:block;}
+    /* Tab buttons */
+    .tabrow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+    .tbtn{padding:6px 16px;border-radius:18px;border:2px solid var(--bo);background:#fff;color:var(--p);font-weight:700;cursor:pointer;font-size:.85rem;transition:all .2s;}
+    .tbtn.active{background:var(--p);color:#fff;border-color:var(--p);}
+    .tcont{display:none;}.tcont.active{display:block;}
+    /* Tables */
+    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.9rem;}
+    th{background:var(--p);color:#fff;padding:9px 13px;text-align:center;}
+    td{padding:9px 13px;border:1px solid var(--bo);text-align:center;}
+    tr:nth-child(even) td{background:var(--s);}
+    .tok{color:var(--g);font-weight:700;}.terr{color:var(--acc);font-weight:700;}
+    .cmp th{background:var(--dk);}
+    /* Example cards */
+    .ec{border:2px solid var(--bo);border-radius:11px;margin:11px 0;overflow:hidden;}
+    .eh{background:var(--p);color:#fff;padding:9px 18px;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+    .eh.eo{background:var(--o);}.eh.eg{background:var(--g);}.eh.ep{background:var(--pu);}
+    .etog{margin-left:auto;font-size:1.1rem;transition:transform .25s;}
+    .eh.open .etog{transform:rotate(180deg);}
+    .eb{padding:16px 18px;display:none;}.eb.open{display:block;}
+    .hl{display:flex;gap:10px;flex-wrap:wrap;margin:9px 0;}
+    .pill{border-radius:7px;padding:4px 14px;font-size:.87rem;font-weight:700;}
+    .ph0{background:#e8f0fb;color:var(--p);border:1.5px solid var(--p);}
+    .pha{background:#fdf3e7;color:var(--o);border:1.5px solid var(--o);}
+    .tbadge{display:inline-block;border-radius:13px;padding:2px 11px;font-size:.79rem;font-weight:700;margin:4px 0;}
+    .ttwo{background:#e8f0fb;color:var(--p);}
+    .tright{background:#fdf3e7;color:var(--o);}
+    .tleft{background:#fdecea;color:var(--acc);}
+    /* Steps */
+    .steps{margin:14px 0;}
+    .step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+    .sn{min-width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;color:#fff;}
+    .sn.sp2{background:var(--p);}.sn.so2{background:var(--o);}.sn.sg2{background:var(--g);}
+    .st{padding-top:3px;font-size:.95rem;}
+    /* Formula summary rows */
+    .frow{background:#fff;border-radius:9px;border:1.5px solid var(--bo);padding:12px 16px;margin:9px 0;display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+    .ftype{min-width:160px;font-weight:700;color:var(--p);font-size:.87rem;}
+    .fexpr{font-family:'Courier New',monospace;font-size:.95rem;flex:1;}
+    .fcond{font-size:.79rem;color:#666;}
+    /* Quiz */
+    .qc{background:#f9f3ff;border:2px solid var(--pu);border-radius:11px;padding:18px 20px;margin:12px 0;}
+    .qc h3{color:#6c3483;margin-bottom:9px;font-size:.97rem;}
+    .qo{background:#fff;border:2px solid #c39bd3;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:.9rem;transition:all .18s;margin:5px 0;}
+    .qo:hover{background:#f5eef8;border-color:var(--pu);}
+    .qo.correct{background:#eafaf1;border-color:var(--g);color:var(--g);font-weight:700;}
+    .qo.wrong{background:#fdecea;border-color:var(--acc);color:var(--acc);}
+    .qr{margin-top:9px;font-size:.9rem;font-weight:600;}
+    .qrst{margin-top:7px;background:#7d3c98;color:#fff;border:none;border-radius:7px;padding:5px 16px;cursor:pointer;font-size:.85rem;display:none;}
+    footer{text-align:center;color:#999;font-size:.8rem;padding:18px 0 10px;}
+    .mi{font-style:italic;background:#f0f5ff;border-radius:4px;padding:1px 7px;font-size:.92rem;font-family:'Courier New',monospace;color:var(--p);}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>第 10 章：雙母體統計推論</h1>
+  <p>Statistical Inference Concerning Two Populations — 完整互動式學習筆記（10.1 ～ 10.4）</p>
+</header>
+
+<nav>
+  <a href="#over">章節概覽</a>
+  <a href="#s101">10.1 兩均值差（獨立）</a>
+  <a href="#s102">10.2 配對樣本均差</a>
+  <a href="#s103">10.3 兩比例差</a>
+  <a href="#s104">10.4 案例研究</a>
+  <a href="#summary">公式摘要</a>
+  <a href="#quiz">自我測驗</a>
+</nav>
+
+<main>
+
+<!-- ═══ 概覽 ═══ -->
+<section class="sec" id="over">
+  <h2>章節概覽與學習目標</h2>
+  <p>本章從<strong>單一母體</strong>的推論延伸至<strong>兩個母體</strong>的比較，涵蓋三大主題：</p>
+  <div class="g3" style="margin-top:16px;">
+    <div class="card cb"><h3>LO 10.1</h3><p>兩母體<strong>平均數差</strong>（μ₁−μ₂）的推論：獨立樣本</p></div>
+    <div class="card co"><h3>LO 10.2</h3><p>兩母體<strong>均差</strong>（μ_D）的推論：配對樣本</p></div>
+    <div class="card cg"><h3>LO 10.3</h3><p>兩母體<strong>比例差</strong>（p₁−p₂）的推論：獨立樣本</p></div>
+  </div>
+  <div class="hb" style="margin-top:10px;">
+    <strong>核心邏輯：</strong>先建立<strong>點估計量</strong>（如 x̄₁−x̄₂），再根據其抽樣分配建構<strong>信賴區間</strong>，最後進行<strong>假設檢定</strong>。
+  </div>
+
+  <!-- 互動比較圖 -->
+  <p style="font-weight:700;margin:20px 0 8px;">三種情境的檢定類型一覽</p>
+  <div class="cw" style="height:200px;"><canvas id="overChart"></canvas></div>
+</section>
+
+<!-- ═══ 10.1 ═══ -->
+<section class="sec" id="s101">
+  <h2><span class="badge">10.1</span> 兩母體平均數差的推論（獨立樣本）</h2>
+  <p>點估計量：<span class="mi">x̄₁ − x̄₂</span>，用來估計母體差異 μ₁ − μ₂。</p>
+  <p style="margin-top:8px;"><strong>獨立樣本</strong>：兩樣本的抽取過程完全無關，互不影響。</p>
+
+  <h3 style="color:var(--p);margin:18px 0 10px;">三種情境的公式（依變異數已知程度區分）</h3>
+  <div class="tabrow" id="var-tabs">
+    <button class="tbtn active" onclick="switchVarTab(0,this)">情境①：σ₁²、σ₂² 已知</button>
+    <button class="tbtn" onclick="switchVarTab(1,this)">情境②：σ 未知且相等（合併）</button>
+    <button class="tbtn" onclick="switchVarTab(2,this)">情境③：σ 未知且不等（Welch）</button>
+  </div>
+
+  <div class="tcont active" id="vt0">
+    <div class="fb">
+      <div class="fl">情境①：σ₁²、σ₂² 已知 → 使用 z 分配</div>
+      <div class="fm">z = (x̄₁ − x̄₂ − d₀) / √(σ₁²/n₁ + σ₂²/n₂)</div>
+      <div class="fn">信賴區間：(x̄₁−x̄₂) ± z<sub>α/2</sub> × √(σ₁²/n₁ + σ₂²/n₂)</div>
+    </div>
+    <div class="hb">母體標準差 σ 已知（較罕見，常來自歷史資料或大型研究）</div>
+  </div>
+
+  <div class="tcont" id="vt1">
+    <div class="fb">
+      <div class="fl">情境②：σ 未知但假設相等 → 合併估計量 s²ₚ，t 分配，df = n₁+n₂−2</div>
+      <div class="fm">t<sub>df</sub> = (x̄₁ − x̄₂ − d₀) / √(s²ₚ × (1/n₁ + 1/n₂))</div>
+      <div class="fn">s²ₚ = [(n₁−1)s₁² + (n₂−1)s₂²] / (n₁+n₂−2)　　df = n₁+n₂−2<br>信賴區間：(x̄₁−x̄₂) ± t<sub>α/2,df</sub> × √(s²ₚ(1/n₁+1/n₂))</div>
+    </div>
+    <div class="hbo">合併估計量 s²ₚ 是兩樣本變異數的加權平均，以各自自由度為權重。</div>
+  </div>
+
+  <div class="tcont" id="vt2">
+    <div class="fb">
+      <div class="fl">情境③：σ 未知且無法假設相等 → Welch t 分配，df 由公式決定</div>
+      <div class="fm">t<sub>df</sub> = (x̄₁ − x̄₂ − d₀) / √(s₁²/n₁ + s₂²/n₂)</div>
+      <div class="fn">df = (s₁²/n₁ + s₂²/n₂)² / [(s₁²/n₁)²/(n₁−1) + (s₂²/n₂)²/(n₂−1)]（向下取整）<br>信賴區間：(x̄₁−x̄₂) ± t<sub>α/2,df</sub> × √(s₁²/n₁+s₂²/n₂)</div>
+    </div>
+    <div class="hbr">df 通常為小數，取整後較保守。建議使用 Excel（t-Test: Unequal Variances）或 R 自動計算。</div>
+  </div>
+
+  <!-- Two-sample Calculator -->
+  <div class="calc">
+    <h3><span class="cicon bp2">Δx̄</span>&nbsp;互動式兩樣本均值差計算機</h3>
+    <p style="font-size:.85rem;color:#666;margin-bottom:12px;">先選擇情境，再輸入數據。</p>
+    <div class="cgrid" style="grid-template-columns:repeat(auto-fit,minmax(165px,1fr));">
+      <div class="cinp"><label>情境（變異數假設）</label>
+        <select id="ts-case" onchange="updateTSCase()">
+          <option value="0">①：σ₁²、σ₂² 已知（z）</option>
+          <option value="1" selected>②：σ 未知且相等（pooled t）</option>
+          <option value="2">③：σ 未知且不等（Welch t）</option>
+        </select>
+      </div>
+      <div class="cinp"><label>尾端類型</label>
+        <select id="ts-tail">
+          <option value="two" selected>雙尾（μ₁−μ₂ ≠ d₀）</option>
+          <option value="right">右尾（μ₁−μ₂ > d₀）</option>
+          <option value="left">左尾（μ₁−μ₂ &lt; d₀）</option>
+        </select>
+      </div>
+      <div class="cinp"><label>假設差值 d₀</label><input type="number" id="ts-d0" value="0" step="0.01"></div>
+      <div class="cinp"><label>顯著水準 α</label><input type="number" id="ts-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
+    </div>
+    <div class="g2" style="margin-bottom:14px;">
+      <div style="background:#f0f5ff;border-radius:10px;padding:14px;">
+        <p style="font-weight:700;color:var(--p);margin-bottom:10px;">母體 1</p>
+        <div class="cinp" style="margin-bottom:8px;"><label>樣本均值 x̄₁</label><input type="number" id="ts-x1" value="1.68" step="0.001"></div>
+        <div class="cinp" style="margin-bottom:8px;"><label id="ts-s1-label">樣本標準差 s₁</label><input type="number" id="ts-s1" value="0.22" min="0.001" step="0.001"></div>
+        <div class="cinp"><label>樣本數 n₁</label><input type="number" id="ts-n1" value="20" min="2" step="1"></div>
+      </div>
+      <div style="background:#fdf3e7;border-radius:10px;padding:14px;">
+        <p style="font-weight:700;color:var(--o);margin-bottom:10px;">母體 2</p>
+        <div class="cinp" style="margin-bottom:8px;"><label>樣本均值 x̄₂</label><input type="number" id="ts-x2" value="1.95" step="0.001"></div>
+        <div class="cinp" style="margin-bottom:8px;"><label id="ts-s2-label">樣本標準差 s₂</label><input type="number" id="ts-s2" value="0.24" min="0.001" step="0.001"></div>
+        <div class="cinp"><label>樣本數 n₂</label><input type="number" id="ts-n2" value="25" min="2" step="1"></div>
+      </div>
+    </div>
+    <button class="cbtn bp2" onclick="calcTS()">計算兩樣本檢定</button>
+    <div class="cres" id="ts-res">
+      <div class="rgrid" id="ts-rg"></div>
+      <p style="font-weight:700;margin:10px 0 4px;font-size:.9rem;">信賴區間（(1−α)×100%）</p>
+      <canvas class="ci-canvas" id="ts-ci-canvas"></canvas>
+      <div class="dbox" id="ts-dec"></div>
+    </div>
+    <div class="cw"><canvas id="ts-chart"></canvas></div>
+  </div>
+
+  <!-- Examples 10.1–10.4 -->
+  <div class="ec">
+    <div class="eh" onclick="toggleEx(this)">例題 10.1 — 香菸尼古丁含量（合併 t，95% CI）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>比較 Brand A（n₁=20，x̄₁=1.68，s₁=0.22）與 Brand B（n₂=25，x̄₂=1.95，s₂=0.24）的尼古丁含量。σ 未知但假設相等。</p>
+      <p style="margin-top:10px;">
+        s²ₚ = [(19)(0.22²)+(24)(0.24²)]/(43) = (0.9196+1.3824)/43 = <strong>0.0535</strong><br>
+        df = 43，t<sub>0.025,43</sub> = 2.017，SE = √(0.0535×(1/20+1/25)) = <strong>0.0694</strong><br>
+        x̄₁−x̄₂ = 1.68−1.95 = −0.27<br>
+        95% CI = −0.27 ± 2.017×0.0694 = <strong>[−0.41, −0.13]</strong>
+      </p>
+      <div class="hbr">0 不在 CI 內 → 兩品牌尼古丁含量有顯著差異（α=0.05）</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh" onclick="toggleEx(this)">例題 10.2 — 香菸尼古丁假設檢定（信賴區間法）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>使用例 10.1 的 CI 進行雙尾假設檢定。</p>
+      <div class="hl"><span class="pill ph0">H₀: μ₁−μ₂ = 0</span><span class="pill pha">Hₐ: μ₁−μ₂ ≠ 0</span></div>
+      <span class="tbadge ttwo">雙尾檢定（信賴區間法）</span>
+      <p style="margin-top:10px;">
+        95% CI = [−0.41, −0.13]，<strong>不含 0</strong><br>
+        → <span class="terr">拒絕 H₀</span>
+      </p>
+      <div class="hbr">結論：兩品牌平均尼古丁含量有顯著差異。Brand B 顯著高於 Brand A。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh" onclick="toggleEx(this)">例題 10.3 — 城市食品支出（σ 已知，右尾）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>經濟學家聲稱城市1平均週食品支出 > 城市2。City 1：n₁=35，x̄₁=164，σ₁=12.50；City 2：n₂=30，x̄₂=159，σ₂=9.25。α=0.05</p>
+      <div class="hl"><span class="pill ph0">H₀: μ₁−μ₂ ≤ 0</span><span class="pill pha">Hₐ: μ₁−μ₂ > 0</span></div>
+      <span class="tbadge tright">右尾檢定（σ 已知，z）</span>
+      <p style="margin-top:10px;">
+        SE = √(12.50²/35 + 9.25²/30) = √(4.464+2.852) = <strong>2.705</strong><br>
+        z = (164−159−0)/2.705 = <strong>1.8485</strong><br>
+        p 值 = P(Z ≥ 1.8485) = <strong>0.0323</strong><br>
+        0.0323 &lt; 0.05 → <span class="terr">拒絕 H₀</span>
+      </p>
+      <div class="hbr">結論：城市1平均食品支出顯著高於城市2。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh" onclick="toggleEx(this)">例題 10.4 — 黃金 vs 石油年報酬率（Welch t，雙尾）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>比較黃金與石油產業年均報酬率是否不同。各抽樣 n₁=n₂=10 家公司，σ 未知且不可假設相等。</p>
+      <p>黃金：x̄₁=17.2，Var₁=70.67；石油：x̄₂=18.0，Var₂=74.23</p>
+      <div class="hl"><span class="pill ph0">H₀: μ₁−μ₂ = 0</span><span class="pill pha">Hₐ: μ₁−μ₂ ≠ 0</span></div>
+      <span class="tbadge ttwo">雙尾（Welch t）</span>
+      <p style="margin-top:10px;">
+        Excel 計算：t = <strong>−0.3023</strong>，df = 17（Welch 公式），p 值 = <strong>0.766</strong><br>
+        0.766 &gt; 0.05 → <span class="tok">不拒絕 H₀</span>
+      </p>
+      <div class="hbg">結論：兩產業年均報酬率無顯著差異（α=0.05）。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10.2 ═══ -->
+<section class="sec so" id="s102">
+  <h2><span class="badge bo2">10.2</span> 配對樣本均差的推論（μ_D）</h2>
+  <p><strong>配對樣本</strong>：對同一對象在兩個條件下各測量一次，差值 D = X₁ − X₂ 消除了個體間變異，通常比獨立樣本更有效率。</p>
+
+  <div class="g2" style="margin-top:14px;">
+    <div class="card co"><h3>兩種配對方式</h3>
+      <ul style="list-style:none;line-height:2;margin-top:6px;">
+        <li>① <strong>同一對象前後測量</strong>（如：處理前/後）</li>
+        <li>② <strong>配對觀測值</strong>（如：雙胞胎、相似地點）</li>
+      </ul>
+    </div>
+    <div class="card cb"><h3>與獨立樣本的差異</h3>
+      <ul style="list-style:none;line-height:2;margin-top:6px;">
+        <li>獨立樣本：兩組完全分開抽取</li>
+        <li>配對樣本：每對觀測值相關聯</li>
+        <li>配對可消除干擾變異，增加檢定力</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="fb">
+    <div class="fl">配對樣本：估計量 D̄ 與檢定統計量</div>
+    <div class="fm">D̄ = (ΣD_i) / n　，　t<sub>df</sub> = (D̄ − μ_D0) / (s_D / √n)</div>
+    <div class="fn">df = n − 1　｜　μ_D0：假設差值（通常為 0）<br>信賴區間：D̄ ± t<sub>α/2, df</sub> × s_D / √n</div>
+  </div>
+
+  <!-- Matched-pairs Calculator -->
+  <div class="calc co2">
+    <h3><span class="cicon bo2">D̄</span>&nbsp;互動式配對樣本計算機</h3>
+    <div class="cgrid">
+      <div class="cinp"><label>樣本均差 D̄</label><input type="number" id="mp-dbar" value="4.9" step="0.001"></div>
+      <div class="cinp"><label>差值標準差 s_D</label><input type="number" id="mp-sd" value="9.78" min="0.001" step="0.001"></div>
+      <div class="cinp"><label>配對組數 n</label><input type="number" id="mp-n" value="10" min="2" step="1"></div>
+      <div class="cinp"><label>假設差值 μ_D0</label><input type="number" id="mp-d0" value="0" step="0.01"></div>
+      <div class="cinp"><label>顯著水準 α</label><input type="number" id="mp-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
+      <div class="cinp"><label>尾端類型</label>
+        <select id="mp-tail">
+          <option value="two" selected>雙尾（μ_D ≠ μ_D0）</option>
+          <option value="right">右尾（μ_D > μ_D0）</option>
+          <option value="left">左尾（μ_D &lt; μ_D0）</option>
+        </select>
+      </div>
+    </div>
+    <button class="cbtn bo2" onclick="calcMP()">計算配對檢定</button>
+    <div class="cres" id="mp-res">
+      <div class="rgrid" id="mp-rg"></div>
+      <p style="font-weight:700;margin:10px 0 4px;font-size:.9rem;">信賴區間</p>
+      <canvas class="ci-canvas" id="mp-ci-canvas"></canvas>
+      <div class="dbox" id="mp-dec"></div>
+    </div>
+    <div class="cw"><canvas id="mp-chart"></canvas></div>
+  </div>
+
+  <!-- Examples 10.5–10.7 -->
+  <div class="ec">
+    <div class="eh eo" onclick="toggleEx(this)">例題 10.5 — 工作效率前後測（配對 CI）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>管理者測量 10 名員工在變更工作區域前後完成任務的時間（分鐘）。D = 前−後（差值越大表示效率提升越多）。</p>
+      <p style="margin-top:10px;">
+        D̄ = 4.90，s_D = 9.78，n = 10，df = 9，t<sub>0.025,9</sub> = 2.262<br>
+        95% CI = 4.90 ± 2.262 × (9.78/√10) = 4.90 ± 7.00 = <strong>[−2.10, 11.90]</strong>
+      </p>
+      <div class="hbg">CI 包含 0 → 無法在 95% 信心水準下確認工作區域變更提升了效率。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh eo" onclick="toggleEx(this)">例題 10.6 — 工作效率假設檢定（信賴區間法）<span class="etog">▼</span></div>
+    <div class="eb">
+      <div class="hl"><span class="pill ph0">H₀: μ_D = 0（無改變）</span><span class="pill pha">Hₐ: μ_D ≠ 0（有改變）</span></div>
+      <span class="tbadge ttwo">雙尾（配對 t）</span>
+      <p style="margin-top:10px;">
+        95% CI = [−2.10, 11.90]，<strong>包含 0</strong><br>
+        → <span class="tok">不拒絕 H₀</span>
+      </p>
+      <div class="hbg">結論：在 5% 顯著水準下，無法確認工作區域配置的改變對效率有影響。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh eo" onclick="toggleEx(this)">例題 10.7 — 卡路里標示對消費行為的影響（配對 t，右尾）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>營養師針對 40 名顧客，記錄卡路里標示前後的飲料與食物熱量（配對設計：同一顧客前後比較）。</p>
+      <p style="margin-top:10px;"><strong>① 飲料熱量（D = 標示前−標示後）：</strong></p>
+      <div class="hl"><span class="pill ph0">H₀: μ_D ≤ 0</span><span class="pill pha">Hₐ: μ_D > 0</span></div>
+      <span class="tbadge tright">右尾</span>
+      <p>df = 39，t = <strong>1.6286</strong>，p 值（單尾）= <strong>0.0557</strong><br>
+        0.0557 &gt; 0.05 → <span class="tok">不拒絕 H₀</span>（飲料熱量下降未達顯著）</p>
+      <p style="margin-top:12px;"><strong>② 食物熱量：</strong></p>
+      <p>t = <strong>6.7795</strong>，p 值 ≈ <strong>0.000</strong><br>
+        → <span class="terr">拒絕 H₀</span>（食物熱量顯著下降）</p>
+      <div class="hbo">結論：卡路里標示對食物消費有顯著影響，但對飲料消費影響未達統計顯著。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10.3 ═══ -->
+<section class="sec sg" id="s103">
+  <h2><span class="badge bg">10.3</span> 兩母體比例差的推論（p₁ − p₂）</h2>
+  <p>點估計量：<span class="mi">p̂₁ − p̂₂</span>，其中 p̂₁ = x₁/n₁，p̂₂ = x₂/n₂。</p>
+
+  <div class="fb">
+    <div class="fl">信賴區間</div>
+    <div class="fm">(p̂₁ − p̂₂) ± z<sub>α/2</sub> × √(p̂₁(1−p̂₁)/n₁ + p̂₂(1−p̂₂)/n₂)</div>
+    <div class="fn">條件：n₁p̂₁, n₁(1−p̂₁), n₂p̂₂, n₂(1−p̂₂) 均 ≥ 5</div>
+  </div>
+
+  <div class="fb" style="margin-top:10px;">
+    <div class="fl">假設檢定統計量</div>
+    <div class="fm">d₀=0：z = (p̂₁−p̂₂) / √(p̄(1−p̄)(1/n₁+1/n₂))，p̄ = (x₁+x₂)/(n₁+n₂)</div>
+    <div class="fn">d₀≠0：z = [(p̂₁−p̂₂) − d₀] / √(p̂₁(1−p̂₁)/n₁ + p̂₂(1−p̂₂)/n₂)</div>
+  </div>
+
+  <!-- Two-proportion Calculator -->
+  <div class="calc cg2">
+    <h3><span class="cicon bg2">Δp</span>&nbsp;互動式兩比例差計算機</h3>
+    <div class="g2" style="margin-bottom:10px;">
+      <div style="background:#eafaf1;border-radius:10px;padding:14px;">
+        <p style="font-weight:700;color:var(--g);margin-bottom:10px;">母體 1</p>
+        <div class="cinp" style="margin-bottom:8px;"><label>成功次數 x₁</label><input type="number" id="pp-x1" value="49" min="0" step="1"></div>
+        <div class="cinp"><label>樣本數 n₁</label><input type="number" id="pp-n1" value="60" min="1" step="1"></div>
+      </div>
+      <div style="background:#f0fff5;border-radius:10px;padding:14px;">
+        <p style="font-weight:700;color:#1e8449;margin-bottom:10px;">母體 2</p>
+        <div class="cinp" style="margin-bottom:8px;"><label>成功次數 x₂</label><input type="number" id="pp-x2" value="20" min="0" step="1"></div>
+        <div class="cinp"><label>樣本數 n₂</label><input type="number" id="pp-n2" value="50" min="1" step="1"></div>
+      </div>
+    </div>
+    <div class="cgrid">
+      <div class="cinp"><label>假設差值 d₀</label><input type="number" id="pp-d0" value="0.20" step="0.01"></div>
+      <div class="cinp"><label>顯著水準 α</label><input type="number" id="pp-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
+      <div class="cinp"><label>尾端類型</label>
+        <select id="pp-tail">
+          <option value="right" selected>右尾（p₁−p₂ > d₀）</option>
+          <option value="left">左尾（p₁−p₂ &lt; d₀）</option>
+          <option value="two">雙尾（p₁−p₂ ≠ d₀）</option>
+        </select>
+      </div>
+    </div>
+    <button class="cbtn bg2" onclick="calcPP()">計算兩比例檢定</button>
+    <div class="cres" id="pp-res">
+      <div class="rgrid" id="pp-rg"></div>
+      <p style="font-weight:700;margin:10px 0 4px;font-size:.9rem;">95% 信賴區間（使用 p̂₁、p̂₂）</p>
+      <canvas class="ci-canvas" id="pp-ci-canvas"></canvas>
+      <div class="dbox" id="pp-dec"></div>
+    </div>
+    <div class="cw"><canvas id="pp-chart"></canvas></div>
+  </div>
+
+  <!-- Examples 10.8–10.11 -->
+  <div class="ec">
+    <div class="eh eg" onclick="toggleEx(this)">例題 10.8 — 候選人支持率 CI（兩比例差信賴區間）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>三個月前：120 名登記選民中 51 人支持候選人 A（p̂₁=51/120=0.425）<br>
+         現在：80 名登記選民中 44 人支持候選人 A（p̂₂=44/80=0.55）</p>
+      <p style="margin-top:10px;">
+        p̂₁−p̂₂ = 0.425−0.55 = −0.125<br>
+        95% CI：使用 z<sub>0.025</sub>=1.96，計算 SE = √(p̂₁(1−p̂₁)/120 + p̂₂(1−p̂₂)/80)<br>
+        95% CI = <strong>[−0.0071, 0.1043]</strong>（含 0，即 −0.71% ~ 10.43%）
+      </p>
+      <div class="hbg">CI 包含 0 → 無法確認三個月來支持率有顯著變化。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh eg" onclick="toggleEx(this)">例題 10.9 — 候選人支持率假設檢定<span class="etog">▼</span></div>
+    <div class="eb">
+      <div class="hl"><span class="pill ph0">H₀: p₁−p₂ = 0</span><span class="pill pha">Hₐ: p₁−p₂ ≠ 0</span></div>
+      <span class="tbadge ttwo">雙尾</span>
+      <p style="margin-top:10px;">
+        CI [−0.0071, 0.1043] 包含 d₀ = 0<br>
+        → <span class="tok">不拒絕 H₀</span>（支持率未有顯著改變）
+      </p>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh eg" onclick="toggleEx(this)">例題 10.10 — 男女網路購物比例（右尾，d₀=0）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>分析師聲稱男性定期網路購物比例 &gt; 女性。<br>
+        男性：n₁=6,000，x₁=5,400（p̂₁=0.90）；女性：n₂=10,000，x₂=8,000（p̂₂=0.80）</p>
+      <div class="hl"><span class="pill ph0">H₀: p₁−p₂ ≤ 0</span><span class="pill pha">Hₐ: p₁−p₂ > 0</span></div>
+      <span class="tbadge tright">右尾（d₀=0，使用合併 p̄）</span>
+      <p style="margin-top:10px;">
+        p̄ = (5400+8000)/(6000+10000) = 13400/16000 = <strong>0.8375</strong><br>
+        z = (0.90−0.80)/√(0.8375×0.1625×(1/6000+1/10000)) = <strong>7.4000</strong><br>
+        p 值 ≈ <strong>0.000</strong> → <span class="terr">拒絕 H₀</span>
+      </p>
+      <div class="hbr">結論：男性網路購物比例顯著高於女性（α=0.05）。</div>
+    </div>
+  </div>
+
+  <div class="ec">
+    <div class="eh eg" onclick="toggleEx(this)">例題 10.11 — 酒品盲測偏好（右尾，d₀=0.20）<span class="etog">▼</span></div>
+    <div class="eb">
+      <p>同款酒，告知一組是 $25 高價酒（n₁=60，48 人喜歡，p̂₁=0.80），另一組是 $10 低價酒（n₂=50，20 人喜歡，p̂₂=0.40）。<br>
+        欲確立第一組喜歡比例超過第二組 20 個百分點以上。</p>
+      <div class="hl"><span class="pill ph0">H₀: p₁−p₂ ≤ 0.20</span><span class="pill pha">Hₐ: p₁−p₂ > 0.20</span></div>
+      <span class="tbadge tright">右尾（d₀=0.20，σ 未知用 p̂ 估計）</span>
+      <p style="margin-top:10px;">
+        z = [(0.80−0.40)−0.20] / √(0.80×0.20/60 + 0.40×0.60/50)<br>
+        = 0.20 / √(0.002667+0.0048) = 0.20/0.08638 = <strong>2.3149</strong><br>
+        p 值 = P(Z ≥ 2.3149) = <strong>0.0103</strong><br>
+        0.0103 &lt; 0.05 → <span class="terr">拒絕 H₀</span>
+      </p>
+      <div class="hbr">結論：高價標示組喜歡比例確實比低價標示組高出 20% 以上（α=0.05）。<br>此結果顯示「建議效果」對口味評斷有顯著影響。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 10.4 ═══ -->
+<section class="sec sd" id="s104">
+  <h2><span class="badge bd">10.4</span> 數字的溝通 — 案例研究（線上交友偏好）</h2>
+  <p>研究者 Anka 欲確認：<br>
+    ① 女性想要文化背景相同的伴侶的比例，是否顯著高於男性<br>
+    ② 女性希望伴侶收入與自己一樣多的比例，是否比男性高出 20% 以上</p>
+  <p style="margin-top:10px;">樣本：160 名女性（p̂₁_文化=28/160=0.175，p̂₁_收入=50/160=0.3125）、120 名男性（p̂₂_文化=12/120=0.10，p̂₂_收入=10/120=0.0833）</p>
+
+  <table style="margin-top:14px;">
+    <tr>
+      <th>假設</th><th>檢定統計量 z</th><th>p 值</th><th>結論（α=0.05）</th>
+    </tr>
+    <tr>
+      <td>H₀: p₁−p₂ ≤ 0<br>Hₐ: p₁−p₂ > 0（文化背景）</td>
+      <td>1.7748</td><td>0.038</td><td class="terr">拒絕 H₀</td>
+    </tr>
+    <tr>
+      <td>H₀: p₁−p₂ ≤ 0.20<br>Hₐ: p₁−p₂ > 0.20（收入）</td>
+      <td>約 1.14</td><td>0.255</td><td class="tok">不拒絕 H₀</td>
+    </tr>
+  </table>
+
+  <div class="hbr" style="margin-top:14px;">
+    <strong>結論：</strong>女性對文化背景相同的重視程度確實高於男性（統計顯著），但女性希望收入與伴侶相近的比例並未超出男性 20% 以上（不顯著）。
+  </div>
+  <div class="hb" style="margin-top:10px;">
+    <strong>管理意涵：</strong>交友平台的個人配對演算法，應更加強調文化背景的相似性作為女性用戶的配對優先條件。
+  </div>
+
+  <!-- Summary chart -->
+  <p style="font-weight:700;margin:22px 0 8px;">本章所有例題 p 值總覽</p>
+  <div class="cw" style="height:230px;"><canvas id="sumChart"></canvas></div>
+</section>
+
+<!-- ═══ Summary ═══ -->
+<section class="sec" id="summary">
+  <h2>公式摘要</h2>
+  <div class="frow"><div class="ftype">① z 檢定（σ已知，獨立）</div><div class="fexpr">z = (x̄₁−x̄₂−d₀)/√(σ₁²/n₁+σ₂²/n₂)</div><div class="fcond">df 不適用</div></div>
+  <div class="frow"><div class="ftype">② 合併 t（σ相等，獨立）</div><div class="fexpr">t = (x̄₁−x̄₂−d₀)/√(s²ₚ(1/n₁+1/n₂))</div><div class="fcond">df=n₁+n₂−2</div></div>
+  <div class="frow"><div class="ftype">③ Welch t（σ不等，獨立）</div><div class="fexpr">t = (x̄₁−x̄₂−d₀)/√(s₁²/n₁+s₂²/n₂)</div><div class="fcond">df=Welch公式</div></div>
+  <div class="frow"><div class="ftype">配對樣本 t</div><div class="fexpr">t = (D̄−μ_D0)/(s_D/√n)</div><div class="fcond">df=n−1</div></div>
+  <div class="frow"><div class="ftype">兩比例差 CI</div><div class="fexpr">(p̂₁−p̂₂) ± z<sub>α/2</sub>√(p̂₁(1-p̂₁)/n₁+p̂₂(1-p̂₂)/n₂)</div><div class="fcond">條件：各類各≥5</div></div>
+  <div class="frow"><div class="ftype">兩比例差 z（d₀=0）</div><div class="fexpr">z=(p̂₁−p̂₂)/√(p̄(1-p̄)(1/n₁+1/n₂))</div><div class="fcond">p̄=(x₁+x₂)/(n₁+n₂)</div></div>
+
+  <table style="margin-top:20px;" class="cmp">
+    <tr><th>情境</th><th>估計量</th><th>分配</th><th>df</th></tr>
+    <tr><td>μ₁−μ₂（σ已知）</td><td>x̄₁−x̄₂</td><td>Z</td><td>—</td></tr>
+    <tr><td>μ₁−μ₂（σ未知等）</td><td>x̄₁−x̄₂</td><td>t（合併）</td><td>n₁+n₂−2</td></tr>
+    <tr><td>μ₁−μ₂（σ未知不等）</td><td>x̄₁−x̄₂</td><td>t（Welch）</td><td>Welch公式</td></tr>
+    <tr><td>μ_D（配對）</td><td>D̄</td><td>t</td><td>n−1</td></tr>
+    <tr><td>p₁−p₂（比例）</td><td>p̂₁−p̂₂</td><td>Z</td><td>—</td></tr>
+  </table>
+</section>
+
+<!-- ═══ Quiz ═══ -->
+<section class="sec sp" id="quiz">
+  <h2>自我測驗（5 題）</h2>
+
+  <div class="qc" id="q1">
+    <h3>Q1　兩組樣本，σ₁²=12，σ₂²=35，研究者無法假設兩個變異數相等，應選哪種方法？</h3>
+    <div class="qo" onclick="chkQ(this,'q1',false)">合併 t 檢定（Pooled t-test）</div>
+    <div class="qo" onclick="chkQ(this,'q1',true)">Welch t 檢定（Unequal variances）</div>
+    <div class="qo" onclick="chkQ(this,'q1',false)">z 檢定（已知 σ）</div>
+    <div class="qr" id="q1-r"></div><button class="qrst" onclick="rstQ('q1')">重置</button>
+  </div>
+
+  <div class="qc" id="q2">
+    <h3>Q2　以下哪種研究設計最適合使用「配對樣本 t 檢定」？</h3>
+    <div class="qo" onclick="chkQ(this,'q2',false)">比較台北與台南兩城市居民的月薪</div>
+    <div class="qo" onclick="chkQ(this,'q2',true)">測量同一批受試者在使用新藥前後的血壓</div>
+    <div class="qo" onclick="chkQ(this,'q2',false)">比較兩家工廠不同批次產品的良品率</div>
+    <div class="qr" id="q2-r"></div><button class="qrst" onclick="rstQ('q2')">重置</button>
+  </div>
+
+  <div class="qc" id="q3">
+    <h3>Q3　兩比例差的 95% CI 為 [0.03, 0.18]，請問在 α=0.05 的雙尾檢定（d₀=0）結論為？</h3>
+    <div class="qo" onclick="chkQ(this,'q3',true)">拒絕 H₀（CI 不含 0）</div>
+    <div class="qo" onclick="chkQ(this,'q3',false)">不拒絕 H₀（CI 含 0）</div>
+    <div class="qo" onclick="chkQ(this,'q3',false)">無法判斷</div>
+    <div class="qr" id="q3-r"></div><button class="qrst" onclick="rstQ('q3')">重置</button>
+  </div>
+
+  <div class="qc" id="q4">
+    <h3>Q4　合併估計量 s²ₚ 的自由度為？</h3>
+    <div class="qo" onclick="chkQ(this,'q4',false)">n₁ + n₂</div>
+    <div class="qo" onclick="chkQ(this,'q4',true)">n₁ + n₂ − 2</div>
+    <div class="qo" onclick="chkQ(this,'q4',false)">n₁ × n₂ − 1</div>
+    <div class="qr" id="q4-r"></div><button class="qrst" onclick="rstQ('q4')">重置</button>
+  </div>
+
+  <div class="qc" id="q5">
+    <h3>Q5　進行兩比例差假設檢定（d₀=0），合併估計量 p̄ 的公式為？</h3>
+    <div class="qo" onclick="chkQ(this,'q5',false)">(p̂₁ + p̂₂) / 2</div>
+    <div class="qo" onclick="chkQ(this,'q5',true)">(x₁ + x₂) / (n₁ + n₂)</div>
+    <div class="qo" onclick="chkQ(this,'q5',false)">√(p̂₁ × p̂₂)</div>
+    <div class="qr" id="q5-r"></div><button class="qrst" onclick="rstQ('q5')">重置</button>
+  </div>
+</section>
+
+</main>
+<footer>統計學第10章 雙母體統計推論 完整互動式學習筆記（10.1 ～ 10.4）</footer>
+
+<script>
+// ── Math helpers ─────────────────────────────────────────────
+function npdf(x){return Math.exp(-.5*x*x)/Math.sqrt(2*Math.PI);}
+function ncdf(z){
+  const a=[.254829592,-.284496736,1.421413741,-1.453152027,1.061405429],p=.3275911;
+  const s=z<0?-1:1;z=Math.abs(z);
+  const t=1/(1+p*z);
+  const y=1-((((a[4]*t+a[3])*t+a[2])*t+a[1])*t+a[0])*t*Math.exp(-z*z);
+  return .5*(1+s*y);
+}
+function invN(p){
+  if(p<=0)return -9;if(p>=1)return 9;
+  const cc=[0,-7.784894002430293e-3,-.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
+  const d=[0,7.784695709041462e-3,.3224671290700398,2.445134137142996,3.754408661907416];
+  const c2=[0,-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239];
+  const b=[0,-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];
+  const pL=.02425,pH=1-pL;let q;
+  if(p<pL){q=Math.sqrt(-2*Math.log(p));return(((((cc[1]*q+cc[2])*q+cc[3])*q+cc[4])*q+cc[5])*q+cc[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);}
+  if(p<=pH){q=p-.5;const r=q*q;return(((((c2[1]*r+c2[2])*r+c2[3])*r+c2[4])*r+c2[5])*r+c2[6])*q/((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));return-(((((cc[1]*q+cc[2])*q+cc[3])*q+cc[4])*q+cc[5])*q+cc[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);
+}
+function zpval(z,tail){if(tail==='left')return ncdf(z);if(tail==='right')return 1-ncdf(z);return 2*(1-ncdf(Math.abs(z)));}
+function tpval(t,df,tail){
+  if(typeof jStat!=='undefined'){const c=jStat.studentt.cdf(t,df);if(tail==='left')return c;if(tail==='right')return 1-c;return 2*Math.min(c,1-c);}
+  return zpval(t,tail);
+}
+function tinv(a,df,tail){
+  if(typeof jStat!=='undefined')return jStat.studentt.inv(tail==='two'?1-a/2:1-a,df);
+  return invN(tail==='two'?1-a/2:1-a);
+}
+// ── Chart helpers ─────────────────────────────────────────────
+function buildXY(mn=-4.5,mx=4.5,N=300){const xs=[],ys=[];for(let i=0;i<=N;i++){const x=mn+(mx-mn)*i/N;xs.push(x);ys.push(npdf(x));}return{xs,ys};}
+function buildTXY(df,mn=-5,mx=5,N=300){
+  const xs=[],ys=[];const pdf=x=>typeof jStat!=='undefined'?jStat.studentt.pdf(x,df):npdf(x);
+  for(let i=0;i<=N;i++){const x=mn+(mx-mn)*i/N;xs.push(x);ys.push(pdf(x));}return{xs,ys};
+}
+let tsCh=null,mpCh=null,ppCh=null;
+function mkChart(id,zv,tail,prev,col,dist='z',df=30){
+  const ctx=document.getElementById(id);if(!ctx)return null;
+  const{xs,ys}=dist==='t'?buildTXY(df):buildXY();
+  const az=Math.abs(zv);
+  const rej=xs.map((x,i)=>{
+    if(tail==='right'&&x>=zv)return ys[i];
+    if(tail==='left'&&x<=zv)return ys[i];
+    if(tail==='two'&&(x<=-az||x>=az))return ys[i];
+    return null;
+  });
+  if(prev)prev.destroy();
+  return new Chart(ctx,{type:'line',data:{
+    labels:xs.map(x=>x.toFixed(2)),
+    datasets:[
+      {label:dist==='t'?'t 分配':'標準常態',data:ys,borderColor:'#1a6eb5',borderWidth:2,pointRadius:0,fill:false,tension:.4},
+      {label:'p 值區域',data:rej,borderColor:col,backgroundColor:col+'44',borderWidth:0,pointRadius:0,fill:true,tension:.4}
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},
+    scales:{x:{ticks:{maxTicksLimit:9,font:{size:10}},title:{display:true,text:dist==='t'?'t 值':'z 值'}},y:{display:false}}
+  }});
+}
+// ── CI Number Line ────────────────────────────────────────────
+function drawCI(canvasId,lo,hi,d0){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.clientWidth||canvas.width||600,H=80;
+  canvas.width=W;canvas.height=H;
+  ctx.clearRect(0,0,W,H);
+  const pad=50,span=Math.max(Math.abs(hi-lo)*2,Math.abs(d0-lo)*2.2,Math.abs(hi-d0)*2.2,0.01);
+  const center=(lo+hi)/2;
+  const xmin=center-span*.8,xmax=center+span*.8;
+  const sc=x=>pad+(x-xmin)/(xmax-xmin)*(W-2*pad);
+  const inside=d0>=lo&&d0<=hi;
+  const barCol=inside?'#27ae60':'#e74c3c';
+  // axis
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H/2);ctx.lineTo(W-pad,H/2);ctx.stroke();
+  // CI bar
+  ctx.fillStyle=barCol+'33';ctx.strokeStyle=barCol;ctx.lineWidth=2.5;
+  const lx=sc(lo),rx=sc(hi);
+  ctx.fillRect(lx,H/2-12,rx-lx,24);ctx.strokeRect(lx,H/2-12,rx-lx,24);
+  // caps
+  [lx,rx].forEach(x=>{ctx.beginPath();ctx.moveTo(x,H/2-16);ctx.lineTo(x,H/2+16);ctx.stroke();});
+  // d0 line
+  ctx.strokeStyle='#1a6eb5';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+  const dx=sc(d0);ctx.beginPath();ctx.moveTo(dx,H/2-22);ctx.lineTo(dx,H/2+22);ctx.stroke();ctx.setLineDash([]);
+  // labels
+  ctx.font='12px "Segoe UI",sans-serif';ctx.textAlign='center';ctx.fillStyle=barCol;
+  ctx.fillText(lo.toFixed(4),lx,H/2+32);ctx.fillText(hi.toFixed(4),rx,H/2+32);
+  ctx.fillStyle='#1a6eb5';ctx.fillText('d₀='+d0,dx,H/2-28);
+  ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';
+  ctx.fillText(inside?'包含 d₀':'不含 d₀',(lx+rx)/2,H/2+6);
+}
+// ── Variance case tab switcher ────────────────────────────────
+function switchVarTab(idx,btn){
+  document.querySelectorAll('#var-tabs .tbtn').forEach((b,i)=>{b.classList.toggle('active',i===idx);});
+  document.querySelectorAll('.tcont').forEach((c,i)=>{c.classList.toggle('active',i===idx);});
+}
+// ── Two-sample calculator ─────────────────────────────────────
+function updateTSCase(){
+  const c=+document.getElementById('ts-case').value;
+  const l1=document.getElementById('ts-s1-label'),l2=document.getElementById('ts-s2-label');
+  l1.textContent=c===0?'母體標準差 σ₁':'樣本標準差 s₁';
+  l2.textContent=c===0?'母體標準差 σ₂':'樣本標準差 s₂';
+}
+function calcTS(){
+  const cs=+document.getElementById('ts-case').value;
+  const x1=+document.getElementById('ts-x1').value,x2=+document.getElementById('ts-x2').value;
+  const s1=+document.getElementById('ts-s1').value,s2=+document.getElementById('ts-s2').value;
+  const n1=+document.getElementById('ts-n1').value,n2=+document.getElementById('ts-n2').value;
+  const d0=+document.getElementById('ts-d0').value,a=+document.getElementById('ts-alpha').value;
+  const tail=document.getElementById('ts-tail').value;
+  if([x1,x2,s1,s2,n1,n2,d0,a].some(isNaN)||s1<=0||s2<=0||n1<2||n2<2){alert('請輸入有效數值');return;}
+  const diff=x1-x2;
+  let stat,se,df,dist,sp2=0;
+  if(cs===0){
+    se=Math.sqrt(s1*s1/n1+s2*s2/n2);stat=(diff-d0)/se;df=null;dist='z';
+  }else if(cs===1){
+    sp2=((n1-1)*s1*s1+(n2-1)*s2*s2)/(n1+n2-2);
+    se=Math.sqrt(sp2*(1/n1+1/n2));stat=(diff-d0)/se;df=n1+n2-2;dist='t';
+  }else{
+    se=Math.sqrt(s1*s1/n1+s2*s2/n2);stat=(diff-d0)/se;
+    const v1=s1*s1/n1,v2=s2*s2/n2;
+    df=Math.floor((v1+v2)*(v1+v2)/(v1*v1/(n1-1)+v2*v2/(n2-1)));dist='t';
+  }
+  const pv=dist==='z'?zpval(stat,tail):tpval(stat,df,tail);
+  const rej=pv<a;
+  // CI
+  const cv=dist==='z'?invN(tail==='two'?1-a/2:1-a):tinv(a,df,tail);
+  const ciLo=diff-cv*se,ciHi=diff+cv*se;
+  const rg=document.getElementById('ts-rg');
+  rg.innerHTML=`
+    <div class="ritem"><div class="rl">x̄₁−x̄₂</div><div class="rv">${diff.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">SE</div><div class="rv">${se.toFixed(4)}</div></div>
+    ${cs===1?`<div class="ritem"><div class="rl">s²ₚ</div><div class="rv">${sp2.toFixed(4)}</div></div>`:''}
+    <div class="ritem"><div class="rl">${dist==='z'?'z':'t'} 統計量</div><div class="rv" style="color:${rej?'var(--acc)':'var(--p)'};">${stat.toFixed(4)}</div></div>
+    ${df!=null?`<div class="ritem"><div class="rl">df</div><div class="rv">${df}</div></div>`:''}
+    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--acc)':'var(--g)'};">${pv.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">CI 下限</div><div class="rv">${ciLo.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">CI 上限</div><div class="rv">${ciHi.toFixed(4)}</div></div>`;
+  drawCI('ts-ci-canvas',ciLo,ciHi,d0);
+  const dc=document.getElementById('ts-dec');
+  dc.className='dbox '+(rej?'rj':'nr');
+  dc.innerHTML=rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`;
+  document.getElementById('ts-res').classList.add('show');
+  const col=tail==='right'?'#e67e22':tail==='left'?'#e74c3c':'#1a6eb5';
+  tsCh=mkChart('ts-chart',stat,tail,tsCh,col,dist,df||30);
+}
+// ── Matched-pairs calculator ──────────────────────────────────
+function calcMP(){
+  const db=+document.getElementById('mp-dbar').value,sd=+document.getElementById('mp-sd').value;
+  const n=+document.getElementById('mp-n').value,d0=+document.getElementById('mp-d0').value;
+  const a=+document.getElementById('mp-alpha').value,tail=document.getElementById('mp-tail').value;
+  if([db,sd,n,d0,a].some(isNaN)||sd<=0||n<2){alert('請輸入有效數值');return;}
+  const df=n-1,se=sd/Math.sqrt(n),t=(db-d0)/se,pv=tpval(t,df,tail),rej=pv<a;
+  const cv=tinv(a,df,'two');
+  const ciLo=db-cv*se,ciHi=db+cv*se;
+  document.getElementById('mp-rg').innerHTML=`
+    <div class="ritem"><div class="rl">D̄</div><div class="rv">${db.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">SE=s_D/√n</div><div class="rv">${se.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">df=n−1</div><div class="rv">${df}</div></div>
+    <div class="ritem"><div class="rl">t 統計量</div><div class="rv" style="color:${rej?'var(--acc)':'var(--p)'};">${t.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--acc)':'var(--g)'};">${pv.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">CI 下限</div><div class="rv">${ciLo.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">CI 上限</div><div class="rv">${ciHi.toFixed(4)}</div></div>`;
+  drawCI('mp-ci-canvas',ciLo,ciHi,d0);
+  const dc=document.getElementById('mp-dec');
+  dc.className='dbox '+(rej?'rj':'nr');
+  dc.innerHTML=rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`;
+  document.getElementById('mp-res').classList.add('show');
+  const col=tail==='right'?'#e67e22':tail==='left'?'#e74c3c':'#e67e22';
+  mpCh=mkChart('mp-chart',t,tail,mpCh,col,'t',df);
+}
+// ── Two-proportion calculator ─────────────────────────────────
+function calcPP(){
+  const x1=+document.getElementById('pp-x1').value,n1=+document.getElementById('pp-n1').value;
+  const x2=+document.getElementById('pp-x2').value,n2=+document.getElementById('pp-n2').value;
+  const d0=+document.getElementById('pp-d0').value,a=+document.getElementById('pp-alpha').value;
+  const tail=document.getElementById('pp-tail').value;
+  if([x1,n1,x2,n2,d0,a].some(isNaN)||n1<1||n2<1||x1<0||x1>n1||x2<0||x2>n2){alert('请输入有效数值');return;}
+  const p1=x1/n1,p2=x2/n2,diff=p1-p2;
+  let se,z;
+  if(Math.abs(d0)<1e-9){
+    const pb=(x1+x2)/(n1+n2);
+    se=Math.sqrt(pb*(1-pb)*(1/n1+1/n2));z=(diff-d0)/se;
+  }else{
+    se=Math.sqrt(p1*(1-p1)/n1+p2*(1-p2)/n2);z=(diff-d0)/se;
+  }
+  const pv=zpval(z,tail),rej=pv<a;
+  const cv=invN(1-a/2);
+  const ciSe=Math.sqrt(p1*(1-p1)/n1+p2*(1-p2)/n2);
+  const ciLo=diff-cv*ciSe,ciHi=diff+cv*ciSe;
+  const warn=(n1*p1<5||n1*(1-p1)<5||n2*p2<5||n2*(1-p2)<5)?'<br><small style="color:orange;">⚠ 常態近似條件可能不滿足</small>':'';
+  document.getElementById('pp-rg').innerHTML=`
+    <div class="ritem"><div class="rl">p̂₁</div><div class="rv">${p1.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">p̂₂</div><div class="rv">${p2.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">p̂₁−p̂₂</div><div class="rv">${diff.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">SE</div><div class="rv">${se.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">z 統計量</div><div class="rv" style="color:${rej?'var(--acc)':'var(--p)'};">${z.toFixed(4)}</div></div>
+    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--acc)':'var(--g)'};">${pv.toFixed(4)}</div></div>`;
+  drawCI('pp-ci-canvas',ciLo,ciHi,d0);
+  const dc=document.getElementById('pp-dec');
+  dc.className='dbox '+(rej?'rj':'nr');
+  dc.innerHTML=(rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`)+warn;
+  document.getElementById('pp-res').classList.add('show');
+  const col=tail==='right'?'#27ae60':tail==='left'?'#e74c3c':'#27ae60';
+  ppCh=mkChart('pp-chart',z,tail,ppCh,col);
+}
+// ── Overview Chart ────────────────────────────────────────────
+(function(){
+  const ctx=document.getElementById('overChart');if(!ctx)return;
+  new Chart(ctx,{type:'radar',data:{
+    labels:['獨立樣本\n(σ已知,z)','獨立樣本\n(σ等,pooled t)','獨立樣本\n(σ不等,Welch t)','配對樣本\n(t)','兩比例差\n(z)'],
+    datasets:[
+      {label:'使用複雜度',data:[2,3,4,3,3],backgroundColor:'#1a6eb544',borderColor:'#1a6eb5',borderWidth:2,pointRadius:5},
+      {label:'檢定力（相對）',data:[4,4,3,5,4],backgroundColor:'#27ae6033',borderColor:'#27ae60',borderWidth:2,pointRadius:5}
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+    scales:{r:{min:0,max:5,ticks:{stepSize:1},pointLabels:{font:{size:10}}}}}});
+})();
+// ── Summary p-value chart ─────────────────────────────────────
+(function(){
+  const ctx=document.getElementById('sumChart');if(!ctx)return;
+  const labs=['10.1 尼古丁\n(pooled t)','10.3 食品\n(σ已知 z)','10.4 黃金\n(Welch t)','10.5/6 效率\n(配對 t)','10.7 飲料\n(配對 t)','10.7 食物\n(配對 t)','10.8/9 選舉\n(兩比例)','10.10 購物\n(兩比例)','10.11 酒品\n(兩比例)','10.4案例\n文化背景','10.4案例\n收入'];
+  const pvals=[0.03,0.0323,0.766,0.5,0.0557,0.00,0.45,0.00,0.0103,0.038,0.255];
+  const al=[.05,.05,.05,.05,.05,.05,.05,.05,.05,.05,.05];
+  const col=pvals.map((p,i)=>p<al[i]?'#e74c3c99':'#27ae6099');
+  const bc=pvals.map((p,i)=>p<al[i]?'#e74c3c':'#27ae60');
+  new Chart(ctx,{type:'bar',data:{
+    labels:labs,
+    datasets:[
+      {label:'p 值',data:pvals,backgroundColor:col,borderColor:bc,borderWidth:2,borderRadius:5},
+      {label:'α=0.05',data:al,type:'line',borderColor:'#1a6eb5',borderWidth:2,borderDash:[5,3],pointRadius:0,fill:false}
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(4)}`}}},
+    scales:{y:{min:0,max:.85,ticks:{callback:v=>v.toFixed(2)},title:{display:true,text:'p 值'}},x:{ticks:{font:{size:9}}}}}});
+})();
+// ── Example toggle ────────────────────────────────────────────
+function toggleEx(hdr){hdr.classList.toggle('open');hdr.nextElementSibling.classList.toggle('open');}
+// ── Quiz ─────────────────────────────────────────────────────
+function chkQ(el,qid,ok){
+  const c=document.getElementById(qid);if(c.dataset.answered)return;c.dataset.answered='1';
+  c.querySelectorAll('.qo').forEach(o=>o.style.pointerEvents='none');
+  el.classList.add(ok?'correct':'wrong');
+  const r=document.getElementById(qid+'-r');r.textContent=ok?'✓ 正確！':'✗ 不正確，請重試。';r.style.color=ok?'#27ae60':'#e74c3c';
+  c.querySelector('.qrst').style.display='inline-block';
+}
+function rstQ(qid){
+  const c=document.getElementById(qid);delete c.dataset.answered;
+  c.querySelectorAll('.qo').forEach(o=>{o.className='qo';o.style.pointerEvents='';});
+  document.getElementById(qid+'-r').textContent='';c.querySelector('.qrst').style.display='none';
+}
+// Init
+updateTSCase();
+</script>
+</body>
+</html>
