@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>時間數列分析 Time Series Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--card:#1a1d2e;--card2:#1e2236;
+  --s1:#38bdf8;--s2:#f59e0b;--s3:#a78bfa;--s4:#34d399;--s5:#f87171;
+  --text:#e2e8f0;--muted:#94a3b8;--border:#2d3555;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.75}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;color:var(--s1);margin-bottom:.6rem}
+h3{font-size:1.1rem;color:var(--s2);margin:.8rem 0 .4rem}
+h4{font-size:1rem;color:var(--s4);margin:.6rem 0 .3rem}
+
+header{background:linear-gradient(135deg,#1e2a4a,#0f1117);padding:2.5rem 2rem 2rem;border-bottom:2px solid var(--s1)}
+.ch-label{color:var(--s1);font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.4rem}
+header p{color:var(--muted);margin-top:.5rem;max-width:700px}
+.lo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem;margin-top:1.2rem}
+.lo-item{background:#1e2a4a;border-left:3px solid var(--s1);padding:.5rem .8rem;border-radius:4px;font-size:.85rem}
+.lo-item span{color:var(--s1);font-weight:700;margin-right:.4rem}
+
+nav{position:sticky;top:0;z-index:100;background:#12162a;border-bottom:1px solid var(--border);padding:.6rem 1.5rem;display:flex;gap:.5rem;flex-wrap:wrap}
+nav a{padding:.35rem .8rem;border-radius:20px;font-size:.82rem;color:var(--muted);border:1px solid var(--border);transition:.2s}
+nav a:hover{background:var(--s1);color:#000;border-color:var(--s1)}
+
+main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+section{margin-bottom:3rem}
+.section-title{font-size:1.5rem;color:var(--s1);border-left:4px solid var(--s1);padding-left:.8rem;margin-bottom:1.2rem}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.2rem}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1rem}
+
+.formula-box{background:#0d1b2e;border:1px solid var(--s1);border-radius:8px;padding:1rem 1.4rem;margin:.8rem 0;text-align:center}
+.formula-box .formula{font-size:1.05rem;font-family:'Courier New',monospace;color:#c8e6ff;letter-spacing:.02em}
+.formula-box .note{font-size:.82rem;color:var(--muted);margin-top:.4rem;text-align:left}
+
+.def-box{background:#1a2540;border:2px solid var(--s3);border-radius:8px;padding:1.2rem 1.4rem;margin:.8rem 0}
+.def-box .def-title{color:var(--s3);font-weight:700;text-align:center;letter-spacing:.1em;margin-bottom:.8rem;font-size:.9rem}
+
+.example{border:1px solid var(--s2);border-radius:8px;overflow:hidden;margin:1rem 0}
+.example-header{background:#2a2010;padding:.7rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.example-header h4{color:var(--s2);margin:0;font-size:.95rem}
+.example-header .toggle{color:var(--s2);font-size:1.2rem;transition:transform .3s}
+.example-header.open .toggle{transform:rotate(45deg)}
+.example-body{display:none;padding:1.2rem;border-top:1px solid #3a3010}
+.example-body.open{display:block}
+
+table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.88rem}
+th{background:#1e2a4a;color:var(--s1);padding:.5rem .8rem;text-align:center;border:1px solid var(--border)}
+td{padding:.45rem .8rem;text-align:center;border:1px solid var(--border)}
+tr:nth-child(even) td{background:#161929}
+.highlight-row td{background:#1a2a1a;color:var(--s4);font-weight:600}
+
+.acf-bar-wrap{display:flex;align-items:flex-end;gap:4px;height:100px;margin:.6rem 0;border-bottom:2px solid var(--muted);padding-bottom:2px}
+.acf-bar{min-width:24px;background:var(--s1);border-radius:3px 3px 0 0;transition:.3s}
+.acf-bar.neg{background:var(--s5)}
+.acf-labels{display:flex;gap:4px;margin-top:4px}
+.acf-label{min-width:24px;text-align:center;font-size:.72rem;color:var(--muted)}
+
+.tag-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
+.tag{padding:.25rem .7rem;border-radius:20px;font-size:.82rem;border:1px solid var(--border);color:var(--muted)}
+.tag.ar{border-color:var(--s1);color:var(--s1)}
+.tag.ma{border-color:var(--s2);color:var(--s2)}
+.tag.arma{border-color:var(--s3);color:var(--s3)}
+
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin:.8rem 0}
+.pattern-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.pattern-card .model{color:var(--s3);font-weight:700;font-size:.95rem}
+.pattern-card .acf-info{color:var(--s1);font-size:.82rem}
+.pattern-card .pacf-info{color:var(--s2);font-size:.82rem}
+
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem}
+.calc-card{background:var(--card);border:1px solid var(--s3);border-radius:10px;padding:1.4rem}
+.calc-card h3{color:var(--s3);margin-bottom:1rem}
+label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.2rem;margin-top:.7rem}
+input,select,textarea{width:100%;background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.5rem .8rem;color:var(--text);font-size:.9rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--s3)}
+textarea{min-height:80px;resize:vertical;font-family:'Courier New',monospace;font-size:.82rem}
+.calc-btn{margin-top:1rem;width:100%;padding:.7rem;background:var(--s3);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.95rem;transition:.2s}
+.calc-btn:hover{opacity:.85}
+.calc-result{margin-top:1rem;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1rem;min-height:80px;font-size:.9rem}
+.calc-result .stat{color:var(--s4);font-weight:700;font-size:1.05rem}
+.chart-wrap{margin-top:.8rem;height:160px}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.summary-card .sc-title{color:var(--s2);font-weight:700;margin-bottom:.5rem;font-size:.9rem}
+
+.prof-notes{background:#1a1520;border:1px solid var(--s3);border-radius:10px;padding:1.4rem}
+.prof-notes h2{color:var(--s3)}
+.prof-notes ul{list-style:none;padding:0}
+.prof-notes ul li{padding:.4rem 0;border-bottom:1px solid #2a2040;font-size:.9rem}
+.prof-notes ul li::before{content:"★ ";color:var(--s2)}
+
+.quiz-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem}
+.quiz-q{margin-bottom:1.2rem}
+.quiz-q p{margin-bottom:.5rem;font-weight:600}
+.quiz-opts label{display:block;padding:.35rem .7rem;border-radius:6px;cursor:pointer;margin:.2rem 0;border:1px solid transparent;transition:.2s;font-size:.9rem}
+.quiz-opts label:hover{background:#1e2236}
+.quiz-opts input[type=radio]{width:auto;margin-right:.5rem}
+.quiz-btn{margin-top:1rem;padding:.6rem 1.5rem;background:var(--s4);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+.quiz-feedback{margin-top:.8rem;padding:.7rem 1rem;border-radius:6px;font-size:.9rem;display:none}
+.quiz-feedback.correct{background:#15311f;color:#34d399;border:1px solid #34d399}
+.quiz-feedback.wrong{background:#3f1515;color:#f87171;border:1px solid #f87171}
+.result{display:inline-block;padding:.25rem .7rem;border-radius:12px;font-size:.82rem;font-weight:600}
+.sig{background:#1e3a1e;color:var(--s4);border:1px solid var(--s4)}
+.not-sig{background:#1a1a2e;color:var(--muted);border:1px solid var(--muted)}
+p{margin-bottom:.6rem}
+ul,ol{padding-left:1.4rem;margin-bottom:.6rem}
+li{margin-bottom:.3rem;font-size:.92rem}
+strong{color:var(--s4)}
+code{font-family:'Courier New',monospace;background:#1e2236;padding:.1rem .4rem;border-radius:4px;font-size:.85rem;color:#c8e6ff}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ch-label">Time Series Analysis</div>
+  <h1>時間數列分析</h1>
+  <p>參考書籍：Box, Jenkins &amp; Reinsel《Time Series Analysis》．涵蓋平穩型與非平穩型隨機過程、ARIMA 模式識別、估計、診斷與預測。</p>
+  <div class="lo-grid">
+    <div class="lo-item"><span>Ch.1</span>簡介與基本概念</div>
+    <div class="lo-item"><span>Ch.2</span>平穩型隨機過程 ACF/PACF</div>
+    <div class="lo-item"><span>Ch.3</span>AR / MA / ARMA 過程</div>
+    <div class="lo-item"><span>Ch.4</span>非平穩型 ARIMA</div>
+    <div class="lo-item"><span>Ch.5</span>模式建立（識別）</div>
+    <div class="lo-item"><span>Ch.6</span>估計與診斷</div>
+    <div class="lo-item"><span>Ch.7</span>預測</div>
+    <div class="lo-item"><span>Ch.8</span>季節性時間數列</div>
+  </div>
+</header>
+
+<nav>
+  <a href="#ch1">Ch.1 簡介</a>
+  <a href="#ch2">Ch.2 ACF/PACF</a>
+  <a href="#ch3">Ch.3 AR/MA/ARMA</a>
+  <a href="#ch4">Ch.4 ARIMA</a>
+  <a href="#ch5">Ch.5 模式建立</a>
+  <a href="#ch6">Ch.6 估計診斷</a>
+  <a href="#ch7">Ch.7 預測</a>
+  <a href="#ch8">Ch.8 季節性</a>
+  <a href="#calc">計算機</a>
+  <a href="#summary">總整理</a>
+  <a href="#notes">重點筆記</a>
+  <a href="#quiz">測驗</a>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<!-- CH.1 INTRODUCTION -->
+<!-- ============================================================ -->
+<section id="ch1">
+  <div class="section-title">第1章 簡介</div>
+  <div class="card">
+    <h2>什麼是時間數列？</h2>
+    <p>觀測值隨時間產生變化，彼此之間可能具有相關性。例如：每日氣溫、月銷售量、消費者物價指數（CPI）、犯罪率等。</p>
+    <p><strong>時間數列分析</strong>的目標：利用資料間的時間相關性，建立合適模式，進行<strong>預測</strong>。</p>
+    <div class="card2">
+      <h3>常用方法</h3>
+      <ul>
+        <li><strong>指數平滑法 (Exponential Smoothing)</strong>：以特定期數的移動平均做預測。</li>
+        <li><strong>分解法 (Decomposition)</strong>：利用趨勢(T)、季節(S)、循環(C)、隨機(I)建立模式。</li>
+        <li><strong>ARIMA 模式</strong>：由 Box-Jenkins 提出，本課程主軸。</li>
+      </ul>
+    </div>
+    <div class="card2">
+      <h3>資料型態</h3>
+      <ul>
+        <li><strong>離散型</strong>：如每月盈收，在時間點 t₀, t₁, t₂, … 觀測得 Z₁, Z₂, Z₃, …</li>
+        <li><strong>連續型</strong>：如每日氣溫，利用等時間抽樣轉換為離散型。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.2 STATIONARY PROCESSES -->
+<!-- ============================================================ -->
+<section id="ch2">
+  <div class="section-title">第2章 平穩型隨機過程</div>
+
+  <div class="card">
+    <h2>平穩型時間數列 (Stationary Time Series)</h2>
+    <p>一時間數列其<strong>統計特性不會隨時間變動而改變</strong>。</p>
+    <div class="card2">
+      <h3>1. 嚴密的平穩型 (Strict Stationarity)</h3>
+      <p>所有聯合機率分配皆不隨時間平移而改變。</p>
+      <h3>2. 弱的平穩型 (Weak / Covariance Stationarity)</h3>
+      <p>只有 1 階和 2 階動差不隨時間變動。實務上常用此定義。</p>
+      <ul>
+        <li>對所有 t，E(Z<sub>t</sub>) = μ（均值為常數）</li>
+        <li>對所有 t，Var(Z<sub>t</sub>) = γ₀（變異數為常數）</li>
+        <li>Cov(Z<sub>t</sub>, Z<sub>t+k</sub>) = γ<sub>k</sub>（只與間隔 k 有關，與 t 無關）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>自我相關函數 (ACF)</h2>
+    <div class="formula-box">
+      <div class="formula">自我互變異數 (Autocovariance)：γ<sub>k</sub> = Cov(Z<sub>t</sub>, Z<sub>t+k</sub>)</div>
+      <div class="note">估計式：γ̂<sub>k</sub> = (1/n) Σ (Z<sub>t</sub>−Z̄)(Z<sub>t+k</sub>−Z̄)</div>
+    </div>
+    <div class="formula-box">
+      <div class="formula">自我相關係數 (ACF)：ρ<sub>k</sub> = γ<sub>k</sub> / γ₀</div>
+      <div class="note">估計式：r<sub>k</sub> = γ̂<sub>k</sub> / γ̂₀ ｜ 繪圖得自我相關函數圖 (ACF plot)</div>
+    </div>
+
+    <div class="def-box">
+      <div class="def-title">ρ<sub>k</sub> 的顯著性檢定</div>
+      <p>H₀: ρ<sub>k</sub> = 0（無自我相關）</p>
+      <p>當 n 很大時，r<sub>k</sub> ~ N(0, 1/n)，檢定統計量：</p>
+      <div class="formula-box" style="margin:.4rem 0">
+        <div class="formula">若 |r<sub>k</sub>| &gt; 1.96/√n，則 ρ<sub>k</sub> 顯著（α=5%）</div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>範例：時間數列資料的 ACF 計算</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>資料：101, 103, 100, 98, 97, 100, 102, 99，n=8，Z̄ ≈ 100</p>
+        <p>計算 r₁, r₂, r₃：</p>
+        <table>
+          <tr><th>k</th><th>r<sub>k</sub></th><th>1.96/√8</th><th>判斷</th></tr>
+          <tr><td>1</td><td>−0.31</td><td>±0.693</td><td><span class="not-sig result">不顯著</span></td></tr>
+          <tr><td>2</td><td>−0.05</td><td>±0.693</td><td><span class="not-sig result">不顯著</span></td></tr>
+          <tr><td>3</td><td>−0.08</td><td>±0.693</td><td><span class="not-sig result">不顯著</span></td></tr>
+        </table>
+        <p>因所有 |r<sub>k</sub>| &lt; 0.693，故資料無顯著自我相關，接近白干擾。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>偏自我相關函數 (PACF)</h2>
+    <p>考慮 Z<sub>t</sub> 與 Z<sub>t-k</sub>，在移除中間期 Z<sub>t-1</sub>, …, Z<sub>t-k+1</sub> 的影響後，兩者的淨相關。</p>
+    <div class="formula-box">
+      <div class="formula">利用 Yule-Walker 方程式計算 φ<sub>kk</sub>（PACF 在 k 階的估計值）</div>
+      <div class="note">繪圖得偏自我相關函數圖 (PACF plot)｜顯著標準同 ACF：|φ̂<sub>kk</sub>| &gt; 1.96/√n</div>
+    </div>
+    <div class="def-box">
+      <div class="def-title">Yule-Walker 方程式（以 p 階 AR 為例）</div>
+      <p style="font-family:monospace;font-size:.9rem">
+        ρ₁ = φ₁ + φ₂ρ₁ + … + φ<sub>p</sub>ρ<sub>p-1</sub><br>
+        ρ₂ = φ₁ρ₁ + φ₂ + … + φ<sub>p</sub>ρ<sub>p-2</sub><br>
+        …<br>
+        ρ<sub>p</sub> = φ₁ρ<sub>p-1</sub> + … + φ<sub>p</sub>
+      </p>
+      <p>用 Cramer 法則求解 φ<sub>kk</sub>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.3 AR / MA / ARMA -->
+<!-- ============================================================ -->
+<section id="ch3">
+  <div class="section-title">第3章 平穩型時間數列模式</div>
+
+  <div class="card">
+    <h2>白干擾過程 (White Noise)</h2>
+    <div class="def-box">
+      <div class="def-title">白干擾 a<sub>t</sub> 的定義</div>
+      <ul>
+        <li>E(a<sub>t</sub>) = 0，對所有 t</li>
+        <li>Var(a<sub>t</sub>) = σ<sub>a</sub>²，對所有 t（常數）</li>
+        <li>Cov(a<sub>t</sub>, a<sub>s</sub>) = 0，對所有 t ≠ s（互不相關）</li>
+      </ul>
+    </div>
+    <p>後移運算子 (Backward Shift Operator)：<strong>B Z<sub>t</sub> = Z<sub>t-1</sub></strong>，B² Z<sub>t</sub> = Z<sub>t-2</sub>，依此類推。</p>
+  </div>
+
+  <!-- AR -->
+  <div class="card">
+    <h2>自我迴歸過程 AR(p)</h2>
+    <div class="formula-box">
+      <div class="formula">Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + φ₂Z<sub>t-2</sub> + … + φ<sub>p</sub>Z<sub>t-p</sub> + a<sub>t</sub></div>
+      <div class="note">後移運算子形式：φ(B) Z<sub>t</sub> = a<sub>t</sub>，其中 φ(B) = 1 − φ₁B − φ₂B² − … − φ<sub>p</sub>B<sup>p</sup></div>
+    </div>
+    <p><strong>平穩型條件</strong>：φ(B)=0 的根落在單位圓之<strong>外</strong>（|根| &gt; 1）。</p>
+
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="model">AR(1)</div>
+        <p style="font-size:.85rem;color:var(--muted)">Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + a<sub>t</sub>，平穩條件：|φ₁| &lt; 1</p>
+        <div class="acf-info">ACF：逐漸遞減（幾何或震盪）</div>
+        <div class="pacf-info">PACF：1 期後切斷（φ̂₁₁≠0, φ̂₂₂≈0）</div>
+      </div>
+      <div class="pattern-card">
+        <div class="model">AR(2)</div>
+        <p style="font-size:.85rem;color:var(--muted)">Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + φ₂Z<sub>t-2</sub> + a<sub>t</sub></p>
+        <div class="acf-info">ACF：逐漸遞減</div>
+        <div class="pacf-info">PACF：2 期後切斷</div>
+      </div>
+      <div class="pattern-card">
+        <div class="model">AR(p)</div>
+        <p style="font-size:.85rem;color:var(--muted)">一般 p 階</p>
+        <div class="acf-info">ACF：逐漸遞減</div>
+        <div class="pacf-info">PACF：p 期後切斷</div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>AR(1) 詳細公式</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>模式：Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + a<sub>t</sub></p>
+        <p><strong>變異數</strong>：γ₀ = σ<sub>a</sub>² / (1 − φ₁²)</p>
+        <p><strong>自我互變異數</strong>：γ<sub>k</sub> = φ₁<sup>k</sup> × γ₀</p>
+        <p><strong>ACF</strong>：ρ<sub>k</sub> = φ₁<sup>k</sup>（幾何遞減，若 φ₁&gt;0 同號，若 φ₁&lt;0 交替震盪）</p>
+        <p><strong>PACF</strong>：φ₁₁ = ρ₁ = φ₁，φ₂₂ = φ₃₃ = … = 0 → 1 期後切斷</p>
+        <table>
+          <tr><th>φ₁</th><th>平穩？</th><th>ACF ρ<sub>k</sub> 形狀</th></tr>
+          <tr><td>0.8</td><td>是（|0.8|&lt;1）</td><td>正值緩慢遞減：0.8, 0.64, 0.51, …</td></tr>
+          <tr><td>−0.6</td><td>是（|−0.6|&lt;1）</td><td>交替震盪：−0.6, 0.36, −0.22, …</td></tr>
+          <tr><td>1.2</td><td>否（|1.2|&gt;1）</td><td>爆炸性增長，非平穩</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>AR(2) 詳細公式</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>模式：Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + φ₂Z<sub>t-2</sub> + a<sub>t</sub></p>
+        <p><strong>平穩條件</strong>：φ(B)=1−φ₁B−φ₂B²=0 的根落在單位圓外，等效於：φ₁+φ₂&lt;1, φ₂−φ₁&lt;1, |φ₂|&lt;1</p>
+        <p><strong>Yule-Walker 方程式</strong>：</p>
+        <p style="font-family:monospace">ρ₁ = φ₁/(1−φ₂)，ρ₂ = φ₁ρ₁ + φ₂</p>
+        <p>ρ<sub>k</sub> = φ₁ρ<sub>k-1</sub> + φ₂ρ<sub>k-2</sub>（k ≥ 2，逐漸遞減）</p>
+        <p><strong>PACF</strong>：φ₁₁=ρ₁，φ₂₂=φ₂ ≠ 0，φ₃₃=… = 0 → 2 期後切斷</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MA -->
+  <div class="card">
+    <h2>移動平均過程 MA(q)</h2>
+    <div class="formula-box">
+      <div class="formula">Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub> − θ₂a<sub>t-2</sub> − … − θ<sub>q</sub>a<sub>t-q</sub></div>
+      <div class="note">後移運算子形式：Z<sub>t</sub> = θ(B) a<sub>t</sub>，其中 θ(B) = 1 − θ₁B − θ₂B² − … − θ<sub>q</sub>B<sup>q</sup></div>
+    </div>
+    <p><strong>可逆性條件 (Invertibility)</strong>：θ(B)=0 的根落在單位圓之外。</p>
+
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="model">MA(1)</div>
+        <p style="font-size:.85rem;color:var(--muted)">Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub></p>
+        <div class="acf-info">ACF：1 期後切斷（ρ₁≠0, ρ₂=ρ₃=…=0）</div>
+        <div class="pacf-info">PACF：逐漸遞減</div>
+      </div>
+      <div class="pattern-card">
+        <div class="model">MA(2)</div>
+        <p style="font-size:.85rem;color:var(--muted)">Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub> − θ₂a<sub>t-2</sub></p>
+        <div class="acf-info">ACF：2 期後切斷</div>
+        <div class="pacf-info">PACF：逐漸遞減</div>
+      </div>
+      <div class="pattern-card">
+        <div class="model">MA(q)</div>
+        <p style="font-size:.85rem;color:var(--muted)">一般 q 階</p>
+        <div class="acf-info">ACF：q 期後切斷</div>
+        <div class="pacf-info">PACF：逐漸遞減</div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>MA(1) 詳細公式</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>模式：Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub></p>
+        <p><strong>變異數</strong>：γ₀ = (1+θ₁²)σ<sub>a</sub>²</p>
+        <p><strong>自我互變異數</strong>：γ₁ = −θ₁σ<sub>a</sub>²，γ<sub>k</sub>=0 for k≥2</p>
+        <p><strong>ACF</strong>：ρ₁ = −θ₁/(1+θ₁²)，ρ<sub>k</sub>=0 for k≥2 → <strong>1 期後切斷</strong></p>
+        <p><strong>PACF</strong>：φ<sub>kk</sub> = −(−θ₁)<sup>k</sup>(1−θ₁²<sup>2k</sup>)/(1−θ₁<sup>2k+2</sup>) → <strong>逐漸遞減</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARMA -->
+  <div class="card">
+    <h2>自我迴歸移動平均過程 ARMA(p,q)</h2>
+    <div class="formula-box">
+      <div class="formula">φ(B) Z<sub>t</sub> = θ(B) a<sub>t</sub></div>
+      <div class="note">Z<sub>t</sub> = φ₁Z<sub>t-1</sub>+…+φ<sub>p</sub>Z<sub>t-p</sub> + a<sub>t</sub> − θ₁a<sub>t-1</sub>−…−θ<sub>q</sub>a<sub>t-q</sub></div>
+    </div>
+    <ul>
+      <li><strong>平穩條件</strong>：φ(B)=0 的根落在單位圓外</li>
+      <li><strong>可逆性條件</strong>：θ(B)=0 的根落在單位圓外</li>
+      <li>ACF：逐漸遞減（q 期後以 AR 型態遞減）</li>
+      <li>PACF：逐漸遞減（p 期後以 MA 型態遞減）</li>
+    </ul>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>ARMA(1,1) 詳細公式</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>模式：Z<sub>t</sub> = φ₁Z<sub>t-1</sub> + a<sub>t</sub> − θ₁a<sub>t-1</sub></p>
+        <p><strong>變異數</strong>：γ₀ = σ<sub>a</sub>² (1−2φ₁θ₁+θ₁²) / (1−φ₁²)</p>
+        <p><strong>ACF</strong>：ρ₁ = (1−φ₁θ₁)(φ₁−θ₁)/(1−2φ₁θ₁+θ₁²)</p>
+        <p>ρ<sub>k</sub> = φ₁ ρ<sub>k-1</sub>，for k ≥ 2 → 1 期後以 AR(1) 型態遞減</p>
+        <p><strong>PACF</strong>：逐漸遞減</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.4 ARIMA -->
+<!-- ============================================================ -->
+<section id="ch4">
+  <div class="section-title">第4章 非平穩型時間數列 ARIMA</div>
+
+  <div class="card">
+    <h2>非平穩型的特性與差分</h2>
+    <p><strong>非平穩型</strong>：隨著時間變動，均值會不同（趨勢）。</p>
+    <p><strong>解決方法</strong>：做<strong>差分 (Differencing)</strong>，轉換為平穩型。</p>
+    <div class="formula-box">
+      <div class="formula">差分運算子：∇ Z<sub>t</sub> = Z<sub>t</sub> − Z<sub>t-1</sub> = (1−B) Z<sub>t</sub></div>
+      <div class="note">
+        1 階差分：∇ Z<sub>t</sub> = (1−B) Z<sub>t</sub><br>
+        2 階差分：∇² Z<sub>t</sub> = (1−B)² Z<sub>t</sub><br>
+        d 階差分：∇<sup>d</sup> Z<sub>t</sub> = (1−B)<sup>d</sup> Z<sub>t</sub>
+      </div>
+    </div>
+
+    <div class="def-box">
+      <div class="def-title">ARIMA(p, d, q) 過程</div>
+      <p>對 Z<sub>t</sub> 做 d 階差分，令 W<sub>t</sub> = ∇<sup>d</sup> Z<sub>t</sub>，W<sub>t</sub> 服從 ARMA(p,q) 模式：</p>
+      <div class="formula-box" style="margin:.5rem 0">
+        <div class="formula">φ(B)(1−B)<sup>d</sup> Z<sub>t</sub> = θ(B) a<sub>t</sub></div>
+      </div>
+      <p>p = AR 階數，d = 差分次數，q = MA 階數</p>
+    </div>
+
+    <div class="card2">
+      <h3>常見 ARIMA 模式範例</h3>
+      <table>
+        <tr><th>模式</th><th>方程式</th><th>說明</th></tr>
+        <tr><td>ARIMA(0,1,0)</td><td>Z<sub>t</sub> = Z<sub>t-1</sub> + a<sub>t</sub></td><td>隨機步 (Random Walk)</td></tr>
+        <tr><td>ARIMA(1,1,0)</td><td>∇Z<sub>t</sub> = φ₁∇Z<sub>t-1</sub> + a<sub>t</sub></td><td>差分後 AR(1)</td></tr>
+        <tr><td>ARIMA(0,1,1)</td><td>∇Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub></td><td>差分後 MA(1)，常見模式</td></tr>
+        <tr><td>ARIMA(1,1,1)</td><td>∇Z<sub>t</sub> = φ₁∇Z<sub>t-1</sub> + a<sub>t</sub> − θ₁a<sub>t-1</sub></td><td>差分後 ARMA(1,1)</td></tr>
+      </table>
+    </div>
+
+    <div class="card2">
+      <h3>有常數項的 ARIMA</h3>
+      <p>若 d=1 且有常數 δ，則 E(∇Z<sub>t</sub>) = μ ≠ 0，表示 Z<sub>t</sub> 有<strong>線性趨勢</strong>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.5 MODEL BUILDING -->
+<!-- ============================================================ -->
+<section id="ch5">
+  <div class="section-title">第5章 模式建立（識別）</div>
+
+  <div class="card">
+    <h2>Box-Jenkins 三步驟</h2>
+    <ol>
+      <li><strong>識別 (Identification)</strong>：利用樣本 ACF 和 PACF 判斷 p、d、q 值。</li>
+      <li><strong>估計 (Estimation)</strong>：用條件式或精確最小平方法估計參數。</li>
+      <li><strong>診斷 (Diagnostic Checking)</strong>：檢驗殘差是否為白干擾。</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>模式識別步驟</h2>
+    <ol>
+      <li>看樣本 ACF：若<strong>緩慢遞減</strong>（或不收斂）→ 非平穩，需做差分。</li>
+      <li>做 d 次差分直到 ACF 快速遞減為止 → 確定 d 值。</li>
+      <li>由差分後的樣本 ACF 和 PACF 確定 p、q 值（見下表）。</li>
+    </ol>
+
+    <h3>識別規則</h3>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="model">AR(p)</div>
+        <div class="acf-info">ACF：逐漸遞減</div>
+        <div class="pacf-info">PACF：p 期後切斷 ✓</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">→ 取 q=0，由 PACF 切斷點定 p</p>
+      </div>
+      <div class="pattern-card">
+        <div class="model">MA(q)</div>
+        <div class="acf-info">ACF：q 期後切斷 ✓</div>
+        <div class="pacf-info">PACF：逐漸遞減</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">→ 取 p=0，由 ACF 切斷點定 q</p>
+      </div>
+      <div class="pattern-card">
+        <div class="model">ARMA(p,q)</div>
+        <div class="acf-info">ACF：逐漸遞減</div>
+        <div class="pacf-info">PACF：逐漸遞減</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">→ 兩者皆遞減，需試多個組合</p>
+      </div>
+      <div class="pattern-card">
+        <div class="model">White Noise</div>
+        <div class="acf-info">ACF：全不顯著</div>
+        <div class="pacf-info">PACF：全不顯著</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">→ p=q=0，資料本身無相關</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <h4>SAS 程式範例：ARIMA(0,1,1) 識別流程</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>以 n=197 筆資料（例如溫度序列）為例：</p>
+      <pre style="background:#0d1117;padding:1rem;border-radius:6px;font-size:.82rem;color:#c8e6ff;overflow-x:auto">
+proc arima;
+  identify var = z;         /* 查看原始資料 ACF/PACF */
+proc arima;
+  identify var = z(1);      /* 對 z 做 1 階差分，查看 ACF/PACF */
+  estimate q=(1) printall plot;   /* 估計 MA(1) 參數 */
+  forecast lead = 12;       /* 預測未來 12 期 */
+run;</pre>
+      <p>識別結果：原始資料 ACF 緩慢遞減 → d=1；差分後 ACF 在 lag=1 切斷 → q=1；PACF 逐漸遞減 → p=0。</p>
+      <p>∴ 模式為 <strong>ARIMA(0,1,1)</strong>：∇Z<sub>t</sub> = a<sub>t</sub> − θ₁a<sub>t-1</sub></p>
+      <table>
+        <tr><th>參數</th><th>估計值</th><th>標準誤</th><th>t 值</th><th>p 值</th></tr>
+        <tr><td>MA(1) θ₁</td><td>0.70623</td><td>0.05092</td><td>13.87</td><td>&lt;.0001</td></tr>
+        <tr><td>μ (常數)</td><td>0.00345</td><td>0.00679</td><td>0.51</td><td>0.612</td></tr>
+      </table>
+      <p>AIC = 111.49，SBC = 118.05，MA(1) 顯著，常數項不顯著。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.6 ESTIMATION & DIAGNOSTICS -->
+<!-- ============================================================ -->
+<section id="ch6">
+  <div class="section-title">第6章 參數估計與模式診斷</div>
+
+  <div class="card">
+    <h2>參數估計</h2>
+    <div class="card2">
+      <h3>條件式最小平方法 (Conditional Least Squares)</h3>
+      <p>對 MA 模式，概似函數含遺失值，設遺失值為 0（即 a<sub>0</sub>=a<sub>-1</sub>=…=0），得<strong>條件式概似函數</strong>。</p>
+    </div>
+    <div class="card2">
+      <h3>非線性估計（MA/ARMA 模式）</h3>
+      <p>MA 參數 θ 使 SSE(θ) 為非線性函數，使用<strong>Newton-Raphson 法（泰勒展開迭代）</strong>：</p>
+      <ol>
+        <li>給定初始值 θ<sup>(0)</sup></li>
+        <li>以 θ<sup>(0)</sup> 為中心做泰勒展開至一次項，轉換為線性問題</li>
+        <li>用最小平方求 Δθ，更新 θ<sup>(1)</sup> = θ<sup>(0)</sup> + Δθ</li>
+        <li>重複直到收斂（参數變動量 &lt; 容忍值）</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>模式診斷</h2>
+    <p>若模式合適，殘差 â<sub>t</sub> 應為<strong>白干擾</strong>（無自我相關）。</p>
+
+    <div class="def-box">
+      <div class="def-title">Ljung-Box 檢定（殘差白干擾性）</div>
+      <p>H₀：殘差無自我相關（模式合適）</p>
+      <div class="formula-box" style="margin:.5rem 0">
+        <div class="formula">Q = n(n+2) Σ [r̂<sub>k</sub>² / (n−k)]  (Ljung-Box 統計量)</div>
+        <div class="note">亦可用 Box-Pierce：Q = n Σ r̂<sub>k</sub>²｜服從 χ²(K−p−q)</div>
+      </div>
+      <ul>
+        <li>不拒絕 H₀ → 殘差為白干擾 → <strong>模式合適</strong></li>
+        <li>拒絕 H₀ → 殘差有相關 → 模式需修正</li>
+      </ul>
+    </div>
+
+    <div class="card2">
+      <h3>最佳模式選擇準則</h3>
+      <table>
+        <tr><th>準則</th><th>公式</th><th>特性</th></tr>
+        <tr><td><strong>AIC</strong></td><td>−2ln(L) + 2(p+q)</td><td>有效性強，但不具一致性</td></tr>
+        <tr><td><strong>SBC/BIC</strong></td><td>−2ln(L) + (p+q)ln(n)</td><td>一致性強，但較保守</td></tr>
+        <tr><td>σ̂<sub>a</sub>²</td><td>SSE / (n−p−q)</td><td>白干擾變異數估計值，越小越好</td></tr>
+      </table>
+      <p style="margin-top:.6rem">比較多個候選模式時，以 <strong>AIC 或 SBC 最小</strong>者為優先。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.7 FORECASTING -->
+<!-- ============================================================ -->
+<section id="ch7">
+  <div class="section-title">第7章 預測</div>
+
+  <div class="card">
+    <h2>最佳預測值</h2>
+    <p>設最後觀測值為 Z<sub>n</sub>，預測未來 l 期 Z<sub>n+l</sub> 的最佳預測值 Ẑ<sub>n</sub>(l) 使 MSE 最小。</p>
+    <div class="formula-box">
+      <div class="formula">最佳預測值：Ẑ<sub>n</sub>(l) = E(Z<sub>n+l</sub> | Z<sub>n</sub>, Z<sub>n-1</sub>, …)</div>
+      <div class="note">
+        條件期望值規則：<br>
+        E(Z<sub>n+j</sub> | 已知) = Ẑ<sub>n</sub>(j)，若 j &gt; 0<br>
+        E(Z<sub>n+j</sub> | 已知) = Z<sub>n+j</sub>，若 j ≤ 0<br>
+        E(a<sub>n+j</sub> | 已知) = 0，若 j &gt; 0
+      </div>
+    </div>
+
+    <div class="card2">
+      <h3>各模式的預測公式</h3>
+      <table>
+        <tr><th>模式</th><th>預測公式</th></tr>
+        <tr><td>AR(1)</td><td>Ẑ<sub>n</sub>(l) = φ₁ Ẑ<sub>n</sub>(l−1)，Ẑ<sub>n</sub>(1) = φ₁Z<sub>n</sub></td></tr>
+        <tr><td>MA(1)</td><td>Ẑ<sub>n</sub>(1) = −θ₁â<sub>n</sub>，Ẑ<sub>n</sub>(l) = 0 for l ≥ 2</td></tr>
+        <tr><td>ARIMA(0,1,1)</td><td>Ẑ<sub>n</sub>(l) = Z<sub>n</sub> − θ₁â<sub>n</sub>（常數）</td></tr>
+        <tr><td>ARMA(1,1)</td><td>Ẑ<sub>n</sub>(1) = φ₁Z<sub>n</sub> − θ₁â<sub>n</sub>；Ẑ<sub>n</sub>(l) = φ₁Ẑ<sub>n</sub>(l−1)</td></tr>
+      </table>
+    </div>
+
+    <div class="card2">
+      <h3>預測誤差與預測區間</h3>
+      <div class="formula-box">
+        <div class="formula">e<sub>n</sub>(l) = Z<sub>n+l</sub> − Ẑ<sub>n</sub>(l) = a<sub>n+l</sub> + ψ₁a<sub>n+l-1</sub> + … + ψ<sub>l-1</sub>a<sub>n+1</sub></div>
+      </div>
+      <div class="formula-box">
+        <div class="formula">Var[e<sub>n</sub>(l)] = σ<sub>a</sub>²(1 + ψ₁² + … + ψ<sub>l-1</sub>²)</div>
+        <div class="note">95% 預測區間：Ẑ<sub>n</sub>(l) ± 1.96 × √Var[e<sub>n</sub>(l)]｜隨 l 增大，區間變寬</div>
+      </div>
+    </div>
+
+    <div class="card2">
+      <h3>預測值的更新（修正）</h3>
+      <p>當過了一期，得到新觀測值 Z<sub>n+1</sub>，可更新預測：</p>
+      <div class="formula-box">
+        <div class="formula">Ẑ<sub>n+1</sub>(l−1) = Ẑ<sub>n</sub>(l) + ψ<sub>l-1</sub> × â<sub>n+1</sub></div>
+        <div class="note">â<sub>n+1</sub> = Z<sub>n+1</sub> − Ẑ<sub>n</sub>(1) （實際值 − 預測值）</div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>ARIMA(0,1,1) 預測範例（實際 SAS 輸出）</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>模式：∇Z<sub>t</sub> = a<sub>t</sub> − 0.706a<sub>t-1</sub>，n=197，最後觀測值 Z₁₉₇≈17.1</p>
+        <table>
+          <tr><th>期數</th><th>預測值 Ẑ</th><th>標準誤</th><th>95% 信賴下界</th><th>95% 信賴上界</th></tr>
+          <tr><td>198</td><td>17.5174</td><td>0.3199</td><td>16.8903</td><td>18.1445</td></tr>
+          <tr><td>199</td><td>17.5208</td><td>0.3335</td><td>16.8672</td><td>18.1744</td></tr>
+          <tr><td>200</td><td>17.5243</td><td>0.3465</td><td>16.8452</td><td>18.2033</td></tr>
+          <tr><td>205</td><td>17.5415</td><td>0.4052</td><td>16.7473</td><td>18.3357</td></tr>
+          <tr><td>209</td><td>17.5553</td><td>0.4467</td><td>16.6798</td><td>18.4308</td></tr>
+        </table>
+        <p>預測值趨向常數（∵ ARIMA(0,1,1) 長期預測為常數），標準誤隨預測期增大而擴大。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH.8 SEASONAL -->
+<!-- ============================================================ -->
+<section id="ch8">
+  <div class="section-title">第8章 季節性時間數列</div>
+
+  <div class="card">
+    <h2>季節性模式概述</h2>
+    <p>許多時間數列具有<strong>季節性</strong>，如月份銷售（s=12）、季度資料（s=4）。</p>
+
+    <div class="card2">
+      <h3>季節性 AR / MA 模式</h3>
+      <table>
+        <tr><th>模式</th><th>方程式</th><th>ACF</th><th>PACF</th></tr>
+        <tr><td>SAR(1)<sub>s</sub></td><td>Z<sub>t</sub> = Φ₁Z<sub>t-s</sub> + a<sub>t</sub></td><td>在 s, 2s, 3s, … 逐漸遞減</td><td>在 s 切斷</td></tr>
+        <tr><td>SAR(2)<sub>s</sub></td><td>Z<sub>t</sub> = Φ₁Z<sub>t-s</sub> + Φ₂Z<sub>t-2s</sub> + a<sub>t</sub></td><td>在 s, 2s, … 逐漸遞減</td><td>在 2s 切斷</td></tr>
+        <tr><td>SMA(1)<sub>s</sub></td><td>Z<sub>t</sub> = a<sub>t</sub> − Θ₁a<sub>t-s</sub></td><td>在 s 切斷</td><td>在 s, 2s, … 逐漸遞減</td></tr>
+        <tr><td>SMA(2)<sub>s</sub></td><td>Z<sub>t</sub> = a<sub>t</sub> − Θ₁a<sub>t-s</sub> − Θ₂a<sub>t-2s</sub></td><td>在 2s 切斷</td><td>在 s, 2s, … 逐漸遞減</td></tr>
+      </table>
+    </div>
+
+    <div class="card2">
+      <h3>相乘型季節性 ARIMA (Multiplicative SARIMA)</h3>
+      <div class="formula-box">
+        <div class="formula">ARIMA(p,d,q)(P,D,Q)<sub>s</sub></div>
+        <div class="note">φ(B) Φ(B<sup>s</sup>) ∇<sup>d</sup> ∇<sub>s</sub><sup>D</sup> Z<sub>t</sub> = θ(B) Θ(B<sup>s</sup>) a<sub>t</sub></div>
+      </div>
+      <ul>
+        <li>p,d,q：一般（非季節）部分的 AR 階、差分次數、MA 階</li>
+        <li>P,D,Q：季節部分的 AR 階、差分次數、MA 階</li>
+        <li>s：季節週期（月份 s=12，季度 s=4）</li>
+        <li>∇<sub>s</sub> Z<sub>t</sub> = Z<sub>t</sub> − Z<sub>t-s</sub>（季節差分）</li>
+      </ul>
+    </div>
+
+    <div class="example">
+      <div class="example-header" onclick="toggleEx(this)">
+        <h4>範例：航空乘客資料 ARIMA(0,1,1)(0,1,1)₁₂</h4>
+        <span class="toggle">+</span>
+      </div>
+      <div class="example-body">
+        <p>月份航空乘客資料（n=144, 1949~1960），具有上升趨勢與季節性。<br>
+        先做對數轉換：tf = log(Z)，再識別模式。</p>
+        <pre style="background:#0d1117;padding:1rem;border-radius:6px;font-size:.82rem;color:#c8e6ff;overflow-x:auto">
+proc arima;
+  identify var = tf;        /* 原始 log 序列 */
+proc arima;
+  identify var = tf(1);     /* 1 階差分 */
+proc arima;
+  identify var = tf(1,12);  /* 1 階 + 季節差分 */
+  estimate q=(1,12) noconstant printall plot;
+  forecast lead=12 out=fcast id=time;
+data ex1;
+  set fcast;
+  z = exp(tf);     /* 轉回原始尺度 */
+  fz = exp(forecast);</pre>
+        <p>識別步驟：</p>
+        <ol>
+          <li>tf 的 ACF 緩慢遞減 → d=1（一般差分）</li>
+          <li>tf(1) 的 ACF 在 lag 12, 24 仍顯著 → D=1（季節差分）</li>
+          <li>tf(1,12) 的 ACF 在 lag 1 切斷 → q=1；在 lag 12 切斷 → Q=1</li>
+        </ol>
+        <p>∴ 模式為 <strong>ARIMA(0,1,1)(0,1,1)₁₂</strong>（航空模式，Box-Jenkins 的著名範例）</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CALCULATOR -->
+<!-- ============================================================ -->
+<section id="calc">
+  <div class="section-title">互動計算機</div>
+  <div class="calc-grid">
+
+    <!-- ACF Calculator -->
+    <div class="calc-card">
+      <h3>ACF 顯著性檢定</h3>
+      <label>樣本數 n</label>
+      <input type="number" id="acf-n" value="100" min="10">
+      <label>自我相關係數 r<sub>k</sub>（可輸入多個，以逗號分隔）</label>
+      <input type="text" id="acf-rk" value="0.35, -0.15, 0.08, 0.22, -0.05">
+      <label>顯著水準 α</label>
+      <select id="acf-alpha">
+        <option value="1.96">5%（±1.96/√n）</option>
+        <option value="1.645">10%（±1.645/√n）</option>
+        <option value="2.576">1%（±2.576/√n）</option>
+      </select>
+      <button class="calc-btn" onclick="calcACF()">判斷顯著性</button>
+      <div class="calc-result" id="acf-result">
+        <div style="color:var(--muted);font-size:.85rem">輸入後按計算</div>
+      </div>
+      <div class="chart-wrap"><canvas id="acfChart"></canvas></div>
+    </div>
+
+    <!-- Ljung-Box -->
+    <div class="calc-card">
+      <h3>Ljung-Box 檢定（殘差診斷）</h3>
+      <label>樣本數 n</label>
+      <input type="number" id="lb-n" value="196" min="20">
+      <label>殘差 ACF（r<sub>k</sub>，以逗號分隔，通常取 K=6 或 12）</label>
+      <textarea id="lb-rk">0.107, 0.013, -0.110, -0.120, -0.126, -0.012</textarea>
+      <label>模式階數 p+q</label>
+      <input type="number" id="lb-pq" value="1" min="0">
+      <label>顯著水準 α</label>
+      <select id="lb-alpha">
+        <option value="0.05" selected>5%</option>
+        <option value="0.01">1%</option>
+        <option value="0.10">10%</option>
+      </select>
+      <button class="calc-btn" onclick="calcLB()">Ljung-Box 檢定</button>
+      <div class="calc-result" id="lb-result">
+        <div style="color:var(--muted);font-size:.85rem">輸入殘差 ACF 後按計算</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SUMMARY -->
+<!-- ============================================================ -->
+<section id="summary">
+  <div class="section-title">ACF/PACF 模式識別總整理</div>
+  <div class="card">
+    <table>
+      <tr><th>模式</th><th>ACF 行為</th><th>PACF 行為</th><th>識別線索</th></tr>
+      <tr><td>AR(p)</td><td>逐漸遞減（無切斷）</td><td><strong>p 期後切斷</strong></td><td>由 PACF 切斷點決定 p</td></tr>
+      <tr><td>MA(q)</td><td><strong>q 期後切斷</strong></td><td>逐漸遞減（無切斷）</td><td>由 ACF 切斷點決定 q</td></tr>
+      <tr><td>ARMA(p,q)</td><td>逐漸遞減</td><td>逐漸遞減</td><td>兩者皆遞減，試多組(p,q)</td></tr>
+      <tr><td>非平穩</td><td>緩慢不收斂</td><td>第1期≈1, 之後快速下降</td><td>需做 d 次差分</td></tr>
+      <tr><td>White Noise</td><td>全不顯著</td><td>全不顯著</td><td>無須建模</td></tr>
+    </table>
+  </div>
+
+  <div class="summary-grid" style="margin-top:1rem">
+    <div class="summary-card">
+      <div class="sc-title">AR(p) 關鍵公式</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">φ(B) Z<sub>t</sub> = a<sub>t</sub></div>
+        <div class="note">平穩：|φ(B)=0 的根| &gt; 1<br>ACF 遞減 / PACF p期後切斷</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-title">MA(q) 關鍵公式</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">Z<sub>t</sub> = θ(B) a<sub>t</sub></div>
+        <div class="note">可逆：|θ(B)=0 的根| &gt; 1<br>ACF q期後切斷 / PACF 遞減</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-title">ARIMA(p,d,q)</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">φ(B)(1−B)<sup>d</sup>Z<sub>t</sub> = θ(B)a<sub>t</sub></div>
+        <div class="note">d 次差分後為 ARMA(p,q)<br>Random Walk: ARIMA(0,1,0)</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-title">季節性 SARIMA</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">ARIMA(p,d,q)(P,D,Q)<sub>s</sub></div>
+        <div class="note">航空模式：(0,1,1)(0,1,1)₁₂<br>季節差分：∇<sub>s</sub>Z<sub>t</sub>=Z<sub>t</sub>−Z<sub>t-s</sub></div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-title">模式診斷</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">Q = n(n+2)Σ r̂<sub>k</sub>²/(n−k)</div>
+        <div class="note">Ljung-Box 統計量 ~ χ²(K−p−q)<br>不拒絕 → 殘差白干擾 → 合適</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-title">模式選擇</div>
+      <div class="formula-box" style="text-align:left;font-size:.82rem">
+        <div class="formula" style="font-size:.88rem">AIC / SBC 越小越好</div>
+        <div class="note">AIC = −2lnL + 2(p+q)<br>SBC = −2lnL + (p+q)ln(n)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PROF NOTES -->
+<!-- ============================================================ -->
+<section id="notes">
+  <div class="prof-notes">
+    <h2>教授重點筆記</h2>
+    <ul>
+      <li>Box-Jenkins 三步驟必考：識別(ACF/PACF) → 估計(CLS/MLE) → 診斷(Ljung-Box)。</li>
+      <li>ACF 緩慢遞減 = 非平穩警報！立即差分，直到 ACF 快速衰減。</li>
+      <li>AR → PACF 切斷（決定 p）；MA → ACF 切斷（決定 q）；ARMA → 兩者皆遞減。</li>
+      <li>平穩條件：AR 多項式的根在單位圓「外」；可逆條件：MA 多項式的根在單位圓「外」。</li>
+      <li>差分次數 d 的判斷：ACF 不收斂 → d=1；差分後仍不收斂 → d=2（d 很少超過2）。</li>
+      <li>Ljung-Box 不拒絕 H₀ 才代表模式合適（殘差無相關）。</li>
+      <li>季節資料：先做一般差分(d)消趨勢，再做季節差分(D)消季節性，再看 ACF/PACF 在 s, 2s 的行為。</li>
+      <li>預測區間隨 l 增大而擴大，因為不確定性累積（ψ 係數越來越多）。</li>
+      <li>對數轉換常用於具乘法型季節性的資料（如航空客運量），轉換後方差穩定，再建 ARIMA。</li>
+      <li>AIC 傾向選複雜模式（過擬合風險）；SBC 懲罰更重，傾向簡約模式。實務上兩者一起看。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- QUIZ -->
+<!-- ============================================================ -->
+<section id="quiz">
+  <div class="quiz-wrap">
+    <h2 style="margin-bottom:1.2rem">隨堂測驗</h2>
+
+    <div class="quiz-q">
+      <p>1. 若樣本 ACF 緩慢遞減，PACF 在 lag=1 接近 1，表示資料為？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q1" value="a"> 平穩型 AR(1) 過程</label>
+        <label><input type="radio" name="q1" value="b"> MA(1) 過程</label>
+        <label><input type="radio" name="q1" value="c"> 非平穩型（需差分）</label>
+        <label><input type="radio" name="q1" value="d"> 白干擾過程</label>
+      </div>
+      <div class="quiz-feedback" id="fb1"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>2. AR(p) 模式的識別特徵是？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q2" value="a"> ACF 切斷，PACF 遞減</label>
+        <label><input type="radio" name="q2" value="b"> ACF 遞減，PACF 切斷</label>
+        <label><input type="radio" name="q2" value="c"> ACF 和 PACF 皆切斷</label>
+        <label><input type="radio" name="q2" value="d"> ACF 和 PACF 皆遞減</label>
+      </div>
+      <div class="quiz-feedback" id="fb2"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>3. ARIMA(0,1,1) 模式的 d=1 表示什麼？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q3" value="a"> 模式有 1 個 AR 參數</label>
+        <label><input type="radio" name="q3" value="b"> 做了 1 次差分</label>
+        <label><input type="radio" name="q3" value="c"> 模式有 1 個 MA 參數</label>
+        <label><input type="radio" name="q3" value="d"> 季節週期為 1</label>
+      </div>
+      <div class="quiz-feedback" id="fb3"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>4. Ljung-Box 檢定的 H₀ 為何？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q4" value="a"> 殘差有自我相關（模式不合適）</label>
+        <label><input type="radio" name="q4" value="b"> 殘差無自我相關（白干擾，模式合適）</label>
+        <label><input type="radio" name="q4" value="c"> 資料為非平穩型</label>
+        <label><input type="radio" name="q4" value="d"> 資料服從常態分配</label>
+      </div>
+      <div class="quiz-feedback" id="fb4"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>5. 月份資料（s=12）的季節性 ARIMA 中，∇₁₂Z<sub>t</sub> 代表？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q5" value="a"> 12 次一般差分</label>
+        <label><input type="radio" name="q5" value="b"> Z<sub>t</sub> − Z<sub>t-12</sub>（季節差分）</label>
+        <label><input type="radio" name="q5" value="c"> 12 階 MA 模式</label>
+        <label><input type="radio" name="q5" value="d"> 12 階 AR 模式</label>
+      </div>
+      <div class="quiz-feedback" id="fb5"></div>
+    </div>
+
+    <button class="quiz-btn" onclick="gradeQuiz()">提交答案</button>
+    <div id="quiz-score" style="margin-top:1rem;font-size:1rem;font-weight:700;display:none"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── Toggle examples ──────────────────────────────────────────
+function toggleEx(header){
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ── ACF Calculator ────────────────────────────────────────────
+let acfChartInst = null;
+
+function calcACF(){
+  const n = parseInt(document.getElementById('acf-n').value);
+  const rks = document.getElementById('acf-rk').value.split(',').map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
+  const z = parseFloat(document.getElementById('acf-alpha').value);
+  if(!n||n<2||rks.length===0){
+    document.getElementById('acf-result').innerHTML='<span style="color:var(--s5)">請輸入有效數值</span>';
+    return;
+  }
+  const crit = z / Math.sqrt(n);
+  let html = `<div>樣本數 n=${n}，臨界值 ±${crit.toFixed(4)}</div><table style="margin-top:.6rem"><tr><th>k</th><th>r<sub>k</sub></th><th>顯著性</th></tr>`;
+  rks.forEach((r,i)=>{
+    const sig = Math.abs(r) > crit;
+    html += `<tr><td>${i+1}</td><td>${r.toFixed(4)}</td><td>${sig?'<span class="sig result">顯著</span>':'<span class="not-sig result">不顯著</span>'}</td></tr>`;
+  });
+  html += '</table>';
+  document.getElementById('acf-result').innerHTML = html;
+  drawACFChart(rks, crit);
+}
+
+function drawACFChart(rks, crit){
+  const ctx = document.getElementById('acfChart').getContext('2d');
+  if(acfChartInst) acfChartInst.destroy();
+  const labels = rks.map((_,i)=>`k=${i+1}`);
+  acfChartInst = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'r_k',data:rks,backgroundColor:rks.map(r=>Math.abs(r)>crit?'rgba(248,113,113,0.7)':'rgba(56,189,248,0.7)'),borderWidth:1},
+        {label:'+臨界值',data:Array(rks.length).fill(crit),type:'line',borderColor:'#f59e0b',borderDash:[5,5],pointRadius:0,borderWidth:1.5,fill:false},
+        {label:'−臨界值',data:Array(rks.length).fill(-crit),type:'line',borderColor:'#f59e0b',borderDash:[5,5],pointRadius:0,borderWidth:1.5,fill:false}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        y:{min:-1,max:1,grid:{color:'#2d3555'},ticks:{color:'#94a3b8'}},
+        x:{grid:{color:'#2d3555'},ticks:{color:'#94a3b8'}}
+      },
+      plugins:{legend:{display:false}},
+      animation:{duration:300}
+    }
+  });
+}
+
+// ── Ljung-Box ─────────────────────────────────────────────────
+function calcLB(){
+  const n = parseInt(document.getElementById('lb-n').value);
+  const rks = document.getElementById('lb-rk').value.split(',').map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
+  const pq = parseInt(document.getElementById('lb-pq').value)||0;
+  const alpha = parseFloat(document.getElementById('lb-alpha').value);
+  if(!n||rks.length===0){
+    document.getElementById('lb-result').innerHTML='<span style="color:var(--s5)">請輸入有效數值</span>';
+    return;
+  }
+  const K = rks.length;
+  const df = K - pq;
+  if(df <= 0){
+    document.getElementById('lb-result').innerHTML='<span style="color:var(--s5)">K 必須大於 p+q</span>';
+    return;
+  }
+  // Ljung-Box: Q = n(n+2) * sum(rk^2/(n-k))
+  let Q = 0;
+  rks.forEach((r,i)=>{ Q += (r*r)/(n-(i+1)); });
+  Q *= n*(n+2);
+
+  // χ² critical value (approximation using Wilson-Hilferty)
+  // p-value: 1 - chi2cdf(Q, df)
+  const pval = 1 - chi2CDF(Q, df);
+  const cv = chi2InvApprox(1-alpha, df);
+  const reject = Q > cv;
+
+  document.getElementById('lb-result').innerHTML = `
+    <div class="stat">Q (Ljung-Box) = ${Q.toFixed(4)}</div>
+    <div>df = K−(p+q) = ${K}−${pq} = ${df}</div>
+    <div>p 值（近似）：<strong style="color:var(--s2)">${pval.toFixed(4)}</strong></div>
+    <div>χ²臨界值 (α=${(alpha*100).toFixed(0)}%)：${cv.toFixed(3)}</div>
+    <div style="margin-top:.4rem">${reject
+      ? '<span style="color:var(--s5)">✗ 拒絕 H₀：殘差有自我相關 → 模式不合適，需修正</span>'
+      : '<span style="color:var(--s4)">✓ 不拒絕 H₀：殘差為白干擾 → 模式合適</span>'
+    }</div>
+  `;
+}
+
+// χ² CDF 近似（Wilson-Hilferty）
+function chi2CDF(x, k){
+  if(x<=0) return 0;
+  return gammaCDF(x/2, k/2);
+}
+
+function gammaCDF(x, a){
+  // 用正規近似 Wilson-Hilferty
+  const z = (Math.pow(x/a, 1/3) - (1-1/(9*a))) / Math.sqrt(1/(9*a));
+  return normalCDF(z);
+}
+
+function normalCDF(z){
+  const t = 1/(1+0.2316419*Math.abs(z));
+  const d = 0.3989422820*Math.exp(-z*z/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+  return z>=0 ? 1-p : p;
+}
+
+function chi2InvApprox(p, k){
+  // Wilson-Hilferty inverse
+  const z = normalInv(p);
+  const a = 1 - 2/(9*k);
+  const b = Math.sqrt(2/(9*k));
+  return k * Math.pow(a + b*z, 3);
+}
+
+function normalInv(p){
+  // Rational approximation (Abramowitz & Stegun)
+  if(p<0.5){
+    const t = Math.sqrt(-2*Math.log(p));
+    return -(((0.010328*t+0.802853)*t+2.515517)/((((0.001308*t+0.189269)*t+1.432788)*t+1)));
+  } else {
+    const t = Math.sqrt(-2*Math.log(1-p));
+    return (((0.010328*t+0.802853)*t+2.515517)/((((0.001308*t+0.189269)*t+1.432788)*t+1)));
+  }
+}
+
+// ── Quiz ─────────────────────────────────────────────────────
+function gradeQuiz(){
+  const qAnswers = {q1:'c',q2:'b',q3:'b',q4:'b',q5:'b'};
+  const explain = {
+    q1:'ACF 緩慢遞減且 PACF 第1期≈1，是非平穩型的典型特徵，需做差分。',
+    q2:'AR(p)：PACF 在 p 期後切斷，ACF 逐漸遞減（與 MA 相反）。',
+    q3:'d=1 表示對 Z<sub>t</sub> 做了 1 次差分，∇Z<sub>t</sub>=Z<sub>t</sub>−Z<sub>t-1</sub>，使其平穩。',
+    q4:'Ljung-Box H₀：所有殘差 ACF=0（白干擾），不拒絕才代表模式合適。',
+    q5:'∇₁₂Z<sub>t</sub>=Z<sub>t</sub>−Z<sub>t-12</sub>，是季節差分，消除季節性非平穩。'
+  };
+  let score=0;
+  for(const [q,ans] of Object.entries(qAnswers)){
+    const sel = document.querySelector(`input[name=${q}]:checked`);
+    const fb = document.getElementById('fb'+q.slice(1));
+    fb.style.display='block';
+    if(sel && sel.value===ans){
+      score++;
+      fb.className='quiz-feedback correct';
+      fb.innerHTML=`✓ 正確！${explain[q]}`;
+    } else {
+      fb.className='quiz-feedback wrong';
+      fb.innerHTML=`✗ 正確答案：${ans.toUpperCase()}｜${explain[q]}`;
+    }
+  }
+  const scoreEl = document.getElementById('quiz-score');
+  scoreEl.style.display='block';
+  scoreEl.style.color=score>=4?'var(--s4)':score>=3?'var(--s2)':'var(--s5)';
+  scoreEl.textContent=`得分：${score}/5（${score>=4?'優秀！':score>=3?'不錯！':'再加油！'}）`;
+}
+
+// Init
+window.addEventListener('load',()=>{ calcACF(); });
+</script>
+</body>
+</html>
