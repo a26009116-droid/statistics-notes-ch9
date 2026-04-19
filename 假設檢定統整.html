@@ -1,889 +1,806 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>第9章：假設檢定 完整統整</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jstat@1.9.6/dist/jstat.min.js"></script>
-  <style>
-    :root {
-      --primary:#1a6eb5; --secondary:#e8f0fb; --accent:#e74c3c;
-      --green:#27ae60; --orange:#e67e22; --purple:#8e44ad;
-      --light:#f4f7fb; --dark:#1c2b3a; --border:#c5d5e8;
-      --shadow:0 4px 18px rgba(30,80,160,.10);
-    }
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Segoe UI','微軟正黑體',Arial,sans-serif;background:var(--light);color:var(--dark);line-height:1.7;}
-    /* ── Header ── */
-    header{background:linear-gradient(135deg,#1a6eb5 0%,#0d3f6e 100%);color:#fff;padding:40px 24px 30px;text-align:center;}
-    header h1{font-size:2rem;letter-spacing:2px;margin-bottom:6px;}
-    header p{font-size:.95rem;opacity:.85;}
-    /* ── Nav ── */
-    nav{background:#fff;border-bottom:2px solid var(--border);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;padding:10px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.07);}
-    nav a{text-decoration:none;color:var(--primary);font-weight:700;padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);font-size:.83rem;transition:all .2s;white-space:nowrap;}
-    nav a:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
-    /* ── Main ── */
-    main{max-width:980px;margin:0 auto;padding:32px 16px 64px;}
-    /* ── Section ── */
-    .section{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:30px 26px;margin-bottom:34px;border-left:5px solid var(--primary);}
-    .section.s-orange{border-left-color:var(--orange);}
-    .section.s-green{border-left-color:var(--green);}
-    .section.s-purple{border-left-color:var(--purple);}
-    .section.s-dark{border-left-color:#2c3e50;}
-    .section h2{font-size:1.3rem;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .section.s-orange h2{color:var(--orange);}
-    .section.s-green h2{color:var(--green);}
-    .section.s-purple h2{color:var(--purple);}
-    .section.s-dark h2{color:#2c3e50;}
-    /* ── Badge ── */
-    .badge{color:#fff;border-radius:7px;padding:2px 11px;font-size:.8rem;font-weight:700;letter-spacing:1px;background:var(--primary);white-space:nowrap;}
-    .badge.bo{background:var(--orange);}.badge.bg{background:var(--green);}.badge.bp{background:var(--purple);}.badge.bd{background:#2c3e50;}
-    /* ── Highlight boxes ── */
-    .hbox{border-left:4px solid var(--primary);border-radius:8px;padding:13px 16px;margin:14px 0;font-size:.95rem;background:var(--secondary);}
-    .hbox.ho{background:#fdf3e7;border-color:var(--orange);}
-    .hbox.hr{background:#fdecea;border-color:var(--accent);}
-    .hbox.hg{background:#eafaf1;border-color:var(--green);}
-    .hbox.hp{background:#f5eef8;border-color:var(--purple);}
-    /* ── Formula box ── */
-    .fbox{background:#1c2b3a;color:#e8f0fb;border-radius:10px;padding:18px 22px;margin:14px 0;text-align:center;}
-    .fbox .fl{font-size:.78rem;color:#8eb8e0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-    .fbox .fm{font-size:1.25rem;color:#fff;font-family:'Courier New',monospace;margin:6px 0;}
-    .fbox .fn{font-size:.83rem;color:#8eb8e0;margin-top:8px;}
-    /* ── Steps ── */
-    .steps{margin:14px 0;}
-    .step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
-    .snum{min-width:30px;height:30px;background:var(--primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;}
-    .snum.so{background:var(--orange);}.snum.sg{background:var(--green);}
-    .stxt{padding-top:3px;font-size:.95rem;}
-    /* ── Grid ── */
-    .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
-    @media(max-width:580px){.g2{grid-template-columns:1fr;}}
-    /* ── Cards ── */
-    .card{border-radius:12px;padding:16px;border:2px solid;}
-    .cb{border-color:var(--primary);background:var(--secondary);}
-    .co{border-color:var(--orange);background:#fdf3e7;}
-    .cr{border-color:var(--accent);background:#fdecea;}
-    .cg{border-color:var(--green);background:#eafaf1;}
-    .card h3{font-size:1rem;margin-bottom:8px;}
-    .cb h3{color:var(--primary);}.co h3{color:var(--orange);}.cr h3{color:var(--accent);}.cg h3{color:var(--green);}
-    /* ── Calculator ── */
-    .calc{background:linear-gradient(135deg,#f8fbff,#eef4fd);border:2px solid var(--primary);border-radius:14px;padding:22px;margin:18px 0;}
-    .calc h3{color:var(--primary);font-size:1rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-    .cicon{background:var(--primary);color:#fff;width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0;}
-    .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
-    .cinp label{display:block;font-size:.8rem;font-weight:600;color:#4a6080;margin-bottom:3px;}
-    .cinp input,.cinp select{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.93rem;background:#fff;transition:border-color .2s;}
-    .cinp input:focus,.cinp select:focus{outline:none;border-color:var(--primary);}
-    .cbtn{background:var(--primary);color:#fff;border:none;border-radius:9px;padding:9px 26px;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;margin-bottom:14px;}
-    .cbtn:hover{background:#0d3f6e;}
-    .cres{background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:14px;margin:10px 0;display:none;}
-    .cres.show{display:block;}
-    .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:10px;}
-    .ritem{text-align:center;background:var(--light);border-radius:7px;padding:9px;}
-    .ritem .rl{font-size:.77rem;color:#666;margin-bottom:3px;}
-    .ritem .rv{font-size:1.2rem;font-weight:700;color:var(--primary);}
-    .dbox{text-align:center;border-radius:9px;padding:11px 14px;font-weight:700;font-size:.95rem;margin-top:8px;}
-    .dbox.reject{background:#fdecea;color:var(--accent);border:2px solid var(--accent);}
-    .dbox.noreject{background:#eafaf1;color:var(--green);border:2px solid var(--green);}
-    /* ── Canvas ── */
-    .cw{position:relative;height:200px;margin:14px 0;}
-    .cw.tall{height:250px;}
-    /* ── Tables ── */
-    table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.9rem;}
-    th{background:var(--primary);color:#fff;padding:9px 13px;text-align:center;}
-    td{padding:9px 13px;border:1px solid var(--border);text-align:center;}
-    tr:nth-child(even) td{background:var(--secondary);}
-    .tok{color:var(--green);font-weight:700;}.terr{color:var(--accent);font-weight:700;}
-    .cmp th{background:#2c3e50;}.cmp th:first-child{background:#1a252f;}
-    /* ── Example cards ── */
-    .ecard{border:2px solid var(--border);border-radius:11px;margin:11px 0;overflow:hidden;}
-    .ehdr{background:var(--primary);color:#fff;padding:9px 18px;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
-    .ehdr.eo{background:var(--orange);}.ehdr.eg{background:var(--green);}.ehdr.ep{background:var(--purple);}
-    .etog{margin-left:auto;font-size:1.1rem;transition:transform .25s;}
-    .ehdr.open .etog{transform:rotate(180deg);}
-    .ebody{padding:16px 18px;display:none;}
-    .ebody.open{display:block;}
-    .hline{display:flex;gap:10px;flex-wrap:wrap;margin:9px 0;}
-    .pill{border-radius:7px;padding:4px 14px;font-size:.87rem;font-weight:700;}
-    .ph0{background:#e8f0fb;color:var(--primary);border:1.5px solid var(--primary);}
-    .pha{background:#fdf3e7;color:var(--orange);border:1.5px solid var(--orange);}
-    .tbadge{display:inline-block;border-radius:13px;padding:2px 11px;font-size:.79rem;font-weight:700;margin:4px 0;}
-    .ttwo{background:#e8f0fb;color:var(--primary);}.tright{background:#fdf3e7;color:var(--orange);}.tleft{background:#fdecea;color:var(--accent);}
-    .mi{font-style:italic;background:#f0f5ff;border-radius:4px;padding:1px 7px;font-size:.92rem;font-family:'Courier New',monospace;color:var(--primary);}
-    /* ── Tab buttons ── */
-    .tabrow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
-    .tbtn{padding:6px 16px;border-radius:18px;border:2px solid var(--border);background:#fff;color:var(--primary);font-weight:700;cursor:pointer;font-size:.85rem;transition:all .2s;}
-    .tbtn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
-    .tcontent{display:none;}.tcontent.active{display:block;}
-    /* ── Flow ── */
-    .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:16px 0;}
-    .fbox2{background:var(--primary);color:#fff;border-radius:9px;padding:10px 22px;font-weight:700;font-size:.9rem;text-align:center;width:72%;max-width:360px;box-shadow:0 2px 6px rgba(26,110,181,.2);}
-    .farrow{font-size:1.4rem;color:var(--primary);line-height:1.2;}
-    .fbranch{display:flex;gap:16px;width:82%;max-width:460px;justify-content:center;flex-wrap:wrap;}
-    .fbitem{flex:1;min-width:140px;border-radius:9px;padding:10px 12px;text-align:center;font-weight:600;font-size:.88rem;}
-    .fbitem.reject{background:#fdecea;border:2px solid var(--accent);color:var(--accent);}
-    .fbitem.noreject{background:#eafaf1;border:2px solid var(--green);color:var(--green);}
-    /* ── Formula summary rows ── */
-    .frow{background:#fff;border-radius:9px;border:1.5px solid var(--border);padding:12px 16px;margin:9px 0;display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
-    .ftype{min-width:140px;font-weight:700;color:var(--primary);font-size:.88rem;}
-    .fexpr{font-family:'Courier New',monospace;font-size:.97rem;color:var(--dark);flex:1;}
-    .fcond{font-size:.8rem;color:#666;}
-    /* ── Quiz ── */
-    .qcard{background:#f9f3ff;border:2px solid var(--purple);border-radius:11px;padding:18px 20px;margin:12px 0;}
-    .qcard h3{color:#6c3483;margin-bottom:9px;font-size:.97rem;}
-    .qopts{display:flex;flex-direction:column;gap:7px;margin:10px 0;}
-    .qopt{background:#fff;border:2px solid #c39bd3;border-radius:7px;padding:8px 13px;cursor:pointer;font-size:.9rem;transition:all .18s;}
-    .qopt:hover{background:#f5eef8;border-color:var(--purple);}
-    .qopt.correct{background:#eafaf1;border-color:var(--green);color:var(--green);font-weight:700;}
-    .qopt.wrong{background:#fdecea;border-color:var(--accent);color:var(--accent);}
-    .qres{margin-top:9px;font-size:.9rem;min-height:20px;font-weight:600;}
-    .qreset{margin-top:7px;background:#7d3c98;color:#fff;border:none;border-radius:7px;padding:5px 16px;cursor:pointer;font-size:.85rem;display:none;}
-    footer{text-align:center;color:#999;font-size:.8rem;padding:18px 0 10px;}
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar{width:7px;height:7px;}
-    ::-webkit-scrollbar-track{background:var(--light);}
-    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>第9章｜假設檢定</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstat@1.9.6/dist/jstat.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--card:#1a1d2e;--card2:#1e2236;
+  --blue:#3b82f6;--orange:#f97316;--green:#22c55e;--purple:#a855f7;--red:#ef4444;--teal:#14b8a6;
+  --text:#e2e8f0;--sub:#94a3b8;--border:#2d3561;
+  --s1:#3b82f6;--s2:#f97316;--s3:#a855f7;--s4:#14b8a6;--s5:#22c55e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.65}
+header{background:linear-gradient(135deg,#0c1445 0%,#1a3a6b 100%);padding:2.5rem 2rem;text-align:center;border-bottom:3px solid var(--blue)}
+header h1{font-size:2.2rem;color:#fff;margin-bottom:.4rem;letter-spacing:-.5px}
+header p{color:#93c5fd;font-size:1rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:1rem}
+.chip{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#60a5fa;padding:.3rem 1rem;border-radius:999px;font-size:.8rem}
+nav{background:var(--card);padding:.7rem 1.5rem;display:flex;flex-wrap:wrap;gap:.4rem;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+nav a{color:var(--sub);text-decoration:none;font-size:.82rem;padding:.3rem .7rem;border-radius:6px;transition:all .2s}
+nav a:hover{background:var(--card2);color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+section{margin-bottom:3rem}
+h2{font-size:1.35rem;margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:.7rem}
+h2 .badge{font-size:.72rem;padding:.2rem .65rem;border-radius:6px;font-weight:700;flex-shrink:0}
+h3{font-size:1.05rem;margin-bottom:.7rem;color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:680px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.3rem}
+.card.s1{border-color:rgba(59,130,246,.4)}
+.card.s2{border-color:rgba(249,115,22,.4)}
+.card.s3{border-color:rgba(168,85,247,.4)}
+.card.s4{border-color:rgba(20,184,166,.4)}
+.card.s5{border-color:rgba(34,197,94,.4)}
+.fbox{background:var(--card2);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:.9rem 1.1rem;margin:.7rem 0;font-family:'Courier New',monospace;font-size:.92rem;overflow-x:auto;line-height:1.8}
+.fbox.s2{border-left-color:var(--orange)}
+.fbox.s3{border-left-color:var(--purple)}
+.fbox.s4{border-left-color:var(--teal)}
+.fbox.s5{border-left-color:var(--green)}
+label{display:block;font-size:.83rem;color:var(--sub);margin:.7rem 0 .25rem}
+input,select{width:100%;padding:.5rem .7rem;background:#0d1020;border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.88rem}
+input:focus,select:focus{outline:none;border-color:var(--blue)}
+button{padding:.55rem 1.3rem;border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;transition:filter .2s;margin-top:.7rem}
+.btn1{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff}
+.btn2{background:linear-gradient(135deg,#c2410c,#f97316);color:#fff}
+.btn3{background:linear-gradient(135deg,#7e22ce,#a855f7);color:#fff}
+.btn4{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff}
+button:hover{filter:brightness(1.15)}
+.result{margin-top:.9rem;padding:.9rem 1rem;background:var(--card2);border-radius:8px;font-size:.88rem;line-height:1.9;display:none}
+.result.show{display:block}
+.rej{color:#f87171;font-weight:700}
+.norej{color:#4ade80;font-weight:700}
+canvas{width:100%!important}
+.ex{border:1px solid var(--border);border-radius:10px;margin-bottom:.7rem;overflow:hidden}
+.ex-h{background:var(--card2);padding:.75rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.88rem;font-weight:600;transition:background .15s}
+.ex-h:hover{background:#252a50}
+.ex-b{padding:1rem 1.1rem;display:none;font-size:.85rem;line-height:1.75;background:var(--card)}
+.ex-b.open{display:block}
+.arr{transition:transform .25s;font-size:.8rem}
+.open .arr{transform:rotate(180deg)}
+table.dt{width:100%;border-collapse:collapse;font-size:.83rem;margin:.7rem 0}
+table.dt th{background:var(--card2);padding:.5rem .75rem;text-align:center;border:1px solid var(--border);color:var(--blue)}
+table.dt td{padding:.45rem .75rem;text-align:center;border:1px solid var(--border)}
+.tag{display:inline-block;padding:.12rem .55rem;border-radius:5px;font-size:.73rem;font-weight:700;margin:.15rem}
+.tag-r{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.tag-n{background:rgba(34,197,94,.2);color:#4ade80;border:1px solid rgba(34,197,94,.35)}
+.tag-w{background:rgba(59,130,246,.2);color:#60a5fa;border:1px solid rgba(59,130,246,.35)}
+.tabs{display:flex;gap:.35rem;margin-bottom:1rem;flex-wrap:wrap}
+.tb{padding:.38rem .95rem;border-radius:7px;cursor:pointer;font-size:.82rem;border:1px solid var(--border);background:var(--card2);color:var(--sub);transition:all .2s}
+.tb.on{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border-color:transparent}
+.tc{display:none}
+.tc.on{display:block}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.7rem;margin:.7rem 0}
+.iitem{background:var(--card2);border-radius:8px;padding:.75rem 1rem;text-align:center}
+.iitem .v{font-size:1.3rem;font-weight:700;color:var(--blue);margin-bottom:.2rem}
+.iitem .d{font-size:.75rem;color:var(--sub)}
+.step-box{background:var(--card2);border-radius:10px;padding:1rem 1.2rem;margin:.7rem 0}
+.step-row{display:flex;gap:.8rem;margin:.5rem 0;align-items:flex-start}
+.sn{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;min-width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:.15rem}
+.prof-card{background:linear-gradient(135deg,#0c1a3a,#1a2952);border:2px solid rgba(59,130,246,.5);border-radius:14px;padding:1.5rem;margin-bottom:1.2rem}
+.prof-card h3{color:#60a5fa;font-size:1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+.highlight-box{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:10px;padding:1rem 1.2rem;margin:.7rem 0}
+.highlight-box.blue{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.3)}
+.highlight-box.green{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3)}
+.highlight-box.red{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
+.quiz-q{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.9rem}
+.quiz-q p{margin-bottom:.7rem;font-weight:600}
+.qopt{display:block;padding:.45rem .85rem;margin:.25rem 0;background:var(--card2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.qopt:hover{border-color:var(--blue)}
+.qopt.ok{background:rgba(34,197,94,.15);border-color:var(--green);color:var(--green)}
+.qopt.ng{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red)}
+.chart-wrap{max-height:220px;position:relative}
+</style>
 </head>
 <body>
 
 <header>
-  <h1>第 9 章：假設檢定</h1>
-  <p>Hypothesis Testing — 完整互動式學習筆記（9.1 ～ 9.6）</p>
+  <h1>第 9 章｜假設檢定</h1>
+  <p>Hypothesis Testing</p>
+  <div class="chips">
+    <span class="chip">H₀ / Hₐ 建立</span>
+    <span class="chip">Type I &amp; II 誤差</span>
+    <span class="chip">z 檢定（σ已知）</span>
+    <span class="chip">t 檢定（σ未知）</span>
+    <span class="chip">比例檢定</span>
+    <span class="chip">臨界值法</span>
+  </div>
 </header>
 
 <nav>
-  <a href="#s91">9.1 基本概念</a>
-  <a href="#s92">9.2 μ檢定（σ已知）</a>
-  <a href="#s93">9.3 μ檢定（σ未知）</a>
-  <a href="#s94">9.4 比例檢定</a>
-  <a href="#s95">9.5 臨界值法</a>
-  <a href="#s96">9.6 案例研究</a>
-  <a href="#summary">公式摘要</a>
+  <a href="#s91">9.1 H₀/Hₐ</a>
+  <a href="#s92err">9.2 型誤差</a>
+  <a href="#s92z">9.2 z 檢定</a>
+  <a href="#s93t">9.3 t 檢定</a>
+  <a href="#s94p">9.4 比例檢定</a>
+  <a href="#s95cv">9.5 臨界值法</a>
+  <a href="#s96">9.6 案例</a>
+  <a href="#calc">互動計算機</a>
+  <a href="#summary">公式整理</a>
+  <a href="#prof">教授觀點</a>
   <a href="#quiz">自我測驗</a>
 </nav>
 
 <main>
 
-<!-- ═══════════════════ 9.1 ═══════════════════ -->
-<section class="section" id="s91">
-  <h2><span class="badge">9.1</span> 假設檢定基本概念</h2>
-  <p>假設檢定是透過樣本資料，判斷是否有足夠證據推翻某一預設命題的統計程序。</p>
+<!-- ===== 9.1 ===== -->
+<section id="s91">
+  <h2>9.1 虛無假設與對立假設
+    <span class="badge" style="background:rgba(59,130,246,.2);color:var(--blue)">LO 9.1</span>
+  </h2>
+  <p style="color:var(--sub);margin-bottom:1rem">假設檢定是用樣本資料來挑戰「現狀」（status quo）的統計方法。</p>
 
-  <div class="g2" style="margin-top:16px;">
-    <div class="card cb"><h3>虛無假設 H₀</h3><p>代表現狀（status quo），<strong>必須含等號</strong>（=、≤、≥）</p></div>
-    <div class="card co"><h3>對立假設 Hₐ</h3><p>研究者想確立的新主張，<strong>不含等號</strong>（≠、&gt;、&lt;）</p></div>
-  </div>
-
-  <table>
-    <tr><th>H₀ 符號</th><th>Hₐ 符號</th><th>檢定類型</th></tr>
-    <tr><td>=</td><td>≠</td><td>雙尾檢定</td></tr>
-    <tr><td>≤</td><td>&gt;</td><td>右尾檢定（單尾）</td></tr>
-    <tr><td>≥</td><td>&lt;</td><td>左尾檢定（單尾）</td></tr>
-  </table>
-
-  <div class="flow" style="margin-top:16px;">
-    <div class="fbox2">設定 H₀ 與 Hₐ</div>
-    <div class="farrow">↓</div>
-    <div class="fbox2">收集樣本，計算檢定統計量</div>
-    <div class="farrow">↓</div>
-    <div class="fbox2">算出 p 值（或比較臨界值）</div>
-    <div class="farrow">↓</div>
-    <div class="fbranch">
-      <div class="fbitem reject">p 值 &lt; α<br>→ 拒絕 H₀</div>
-      <div class="fbitem noreject">p 值 ≥ α<br>→ 不拒絕 H₀</div>
-    </div>
-  </div>
-
-  <div class="hbox hr" style="margin-top:14px;"><strong>重要：</strong>結論只能說「拒絕 H₀」或「不拒絕 H₀」，<em>絕對不能說「接受 H₀」</em>。不拒絕 ≠ 為真。</div>
-
-  <table style="margin-top:16px;">
-    <tr><th>決策 \ 真實情況</th><th>H₀ 為真</th><th>H₀ 為假</th></tr>
-    <tr><td><strong>拒絕 H₀</strong></td><td class="terr">型一錯誤（α）</td><td class="tok">正確決策</td></tr>
-    <tr><td><strong>不拒絕 H₀</strong></td><td class="tok">正確決策</td><td class="terr">型二錯誤（β）</td></tr>
-  </table>
-
-  <!-- 型一型二錯誤互動 -->
-  <div style="margin-top:20px;">
-    <p style="font-weight:700;margin-bottom:8px;">型一 / 型二 錯誤與檢定力互動圖（拖曳 α 值）</p>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
-      <label style="font-size:.88rem;min-width:120px;">α = <span id="alphaVal">0.05</span></label>
-      <input id="alphaSlider" type="range" min="1" max="20" value="5" style="flex:1;" oninput="updateAlphaChart(this.value)">
-    </div>
-    <div class="cw"><canvas id="errChart"></canvas></div>
-  </div>
-</section>
-
-<!-- ═══════════════════ 9.2 ═══════════════════ -->
-<section class="section s-orange" id="s92">
-  <h2><span class="badge bo">9.2</span> 母體平均數檢定（σ 已知）—— p 值法</h2>
-  <p>σ 已知時，使用 <strong>z 統計量</strong>，樣本大小需能保證 x̄ 近似常態（n≥30 或母體常態）。</p>
-
-  <div class="fbox">
-    <div class="fl">檢定統計量</div>
-    <div class="fm">z = (x̄ − μ₀) / (σ / √n)</div>
-    <div class="fn">x̄：樣本均值　μ₀：假設值　σ：母體標準差　n：樣本數</div>
-  </div>
-
-  <h3 style="color:var(--orange);margin:18px 0 10px;">p 值法四步驟</h3>
-  <div class="steps">
-    <div class="step"><div class="snum so">1</div><div class="stxt"><strong>設定假設</strong>：確立 H₀ 與 Hₐ（等號放 H₀，研究主張放 Hₐ）</div></div>
-    <div class="step"><div class="snum so">2</div><div class="stxt"><strong>設定顯著水準 α</strong>：常用 0.01 / 0.05 / 0.10，即型一錯誤機率上限</div></div>
-    <div class="step"><div class="snum so">3</div><div class="stxt"><strong>計算 z 值與 p 值</strong>：依尾端類型決定 p 值算法（見下表）</div></div>
-    <div class="step"><div class="snum so">4</div><div class="stxt"><strong>決策</strong>：p 值 &lt; α → 拒絕 H₀；否則不拒絕</div></div>
-  </div>
-
-  <table>
-    <tr><th>對立假設 Hₐ</th><th>p 值計算方式</th></tr>
-    <tr><td>μ &gt; μ₀（右尾）</td><td>P(Z ≥ z)</td></tr>
-    <tr><td>μ &lt; μ₀（左尾）</td><td>P(Z ≤ z)</td></tr>
-    <tr><td>μ ≠ μ₀（雙尾）</td><td>z&gt;0：2×P(Z≥z)；z&lt;0：2×P(Z≤z)</td></tr>
-  </table>
-
-  <!-- Z Calculator -->
-  <div class="calc">
-    <h3><span class="cicon">Z</span>&nbsp;互動式 Z 檢定計算機（σ 已知）</h3>
-    <div class="cgrid">
-      <div class="cinp"><label>樣本平均數 x̄</label><input type="number" id="z-xbar" value="71" step="0.01"></div>
-      <div class="cinp"><label>假設均值 μ₀</label><input type="number" id="z-mu0" value="67" step="0.01"></div>
-      <div class="cinp"><label>母體標準差 σ</label><input type="number" id="z-sigma" value="9" min="0.001" step="0.01"></div>
-      <div class="cinp"><label>樣本數 n</label><input type="number" id="z-n" value="25" min="1" step="1"></div>
-      <div class="cinp"><label>顯著水準 α</label><input type="number" id="z-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
-      <div class="cinp"><label>尾端類型</label>
-        <select id="z-tail">
-          <option value="right">右尾（Hₐ: μ &gt; μ₀）</option>
-          <option value="left">左尾（Hₐ: μ &lt; μ₀）</option>
-          <option value="two">雙尾（Hₐ: μ ≠ μ₀）</option>
-        </select>
+  <div class="grid2">
+    <div class="card s1">
+      <h3>H₀ vs Hₐ</h3>
+      <div class="fbox">
+        H₀（虛無假設）：現狀，包含等號（=, ≤, ≥）<br>
+        Hₐ（對立假設）：我們想要建立的主張（≠, &gt;, &lt;）<br><br>
+        決策規則：<br>
+        • p-value &lt; α → 拒絕 H₀<br>
+        • p-value ≥ α → 不拒絕 H₀
       </div>
+      <p style="font-size:.82rem;color:var(--sub)">注意：我們只說「不拒絕」H₀，<strong>永遠不說「接受」H₀</strong>。</p>
     </div>
-    <button class="cbtn" onclick="calcZ()">計算 Z 檢定</button>
-    <div class="cres" id="z-res">
-      <div class="rgrid" id="z-rg"></div>
-      <div class="dbox" id="z-dec"></div>
-    </div>
-    <div class="cw"><canvas id="z-chart"></canvas></div>
-  </div>
-
-  <div class="hbox" style="margin-top:16px;">
-    <strong>雙尾檢定的信賴區間法</strong><br>
-    (1−α)×100% CI：<span class="mi">x̄ ± z<sub>α/2</sub> × σ/√n</span><br>
-    μ₀ <strong>落在</strong>區間內 → 不拒絕 H₀　｜　μ₀ <strong>落在</strong>區間外 → 拒絕 H₀
-  </div>
-
-  <!-- Examples -->
-  <div class="ecard">
-    <div class="ehdr eo" onclick="toggleEx(this)">例題 9.6 — 開學採購支出（p 值法，σ已知，雙尾）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>研究分析師認為開學每戶花費與 $606.40 不同。n=30，x̄=$622.85，σ=65，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ = 606.40</span><span class="pill pha">Hₐ: μ ≠ 606.40</span></div>
-      <span class="tbadge ttwo">雙尾檢定</span>
-      <p style="margin-top:10px;">
-        z = (622.85 − 606.40) / (65/√30) = <strong>1.3862</strong><br>
-        p 值 = 2 × P(Z ≥ 1.3862) = 2 × 0.0828 = <strong>0.1657</strong><br>
-        0.1657 &gt; 0.05 → <span class="tok">不拒絕 H₀</span>
-      </p>
-      <div class="hbox hg">結論：樣本資料不支持均值偏離 $606.40 的主張。</div>
+    <div class="card s1">
+      <h3>單尾 vs 雙尾</h3>
+      <table class="dt">
+        <thead><tr><th>類型</th><th>Hₐ 符號</th><th>p-value 計算</th></tr></thead>
+        <tbody>
+          <tr><td>右尾</td><td>μ &gt; μ₀</td><td>P(Z ≥ z)</td></tr>
+          <tr><td>左尾</td><td>μ &lt; μ₀</td><td>P(Z ≤ z)</td></tr>
+          <tr><td>雙尾</td><td>μ ≠ μ₀</td><td>2×P(Z ≥ |z|)</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:.82rem;color:var(--sub);margin-top:.5rem">要確立的主張放 Hₐ；等號永遠在 H₀。</p>
     </div>
   </div>
 
-  <div class="ecard">
-    <div class="ehdr eo" onclick="toggleEx(this)">例題 9.7 — 開學採購支出（信賴區間法）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>同例題 9.6，改用 95% 信賴區間法。z<sub>0.025</sub> = 1.96</p>
-      <p style="margin-top:8px;">
-        CI = 622.85 ± 1.96 × (65/√30) = 622.85 ± 23.26 = <strong>[599.59, 646.11]</strong><br>
-        μ₀ = 606.40 落在區間內 → <span class="tok">不拒絕 H₀</span>（結論與 p 值法一致）
-      </p>
+  <h3 style="margin-top:1.5rem;color:var(--sub)">建立假設例題</h3>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.1｜返校購物平均支出是否為 $606.40？（雙尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>貿易團體預測每戶家庭返校購物支出平均為 $606.40。若預測有誤，需要不同的經濟模型。</p>
+      <div class="fbox">H₀: μ = 606.40<br>Hₐ: μ ≠ 606.40（雙尾，因為「有誤」包含高於或低於）</div>
+      <span class="tag tag-w">雙尾檢定</span>
     </div>
   </div>
-
-  <!-- Retirement example -->
-  <div class="ecard">
-    <div class="ehdr eo" onclick="toggleEx(this)">例題（退休年齡）— z 值計算示範（右尾）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>社會學家欲確立平均退休年齡 &gt; 67 歲。σ=9，n=25，x̄=71，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ ≤ 67</span><span class="pill pha">Hₐ: μ &gt; 67</span></div>
-      <span class="tbadge tright">右尾檢定</span>
-      <p style="margin-top:10px;">
-        z = (71 − 67) / (9/√25) = 4 / 1.8 = <strong>2.2222</strong><br>
-        p 值 = P(Z ≥ 2.2222) = <strong>0.0131</strong><br>
-        0.0131 &lt; 0.05 → <span class="terr">拒絕 H₀</span>
-      </p>
-      <div class="hbox hr">結論：樣本資料支持平均退休年齡大於 67 歲。</div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.2｜減重計畫平均減重是否 &gt; 10 磅？（右尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>廣告宣稱平均減重超過 10 磅，消費者想驗證此主張。</p>
+      <div class="fbox">H₀: μ ≤ 10 磅<br>Hₐ: μ &gt; 10 磅（右尾，主張「超過」放 Hₐ）</div>
+      <span class="tag tag-w">右尾檢定</span>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.3｜超過 50% 家庭收看電視？（右尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <div class="fbox">H₀: p ≤ 0.50<br>Hₐ: p &gt; 0.50</div>
+      <span class="tag tag-w">右尾（比例）</span>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.4｜城鎮幸福比例是否低於 60%？（左尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>社會學家擔心近期經濟問題已降低當地幸福感（原先 ≥ 60%）。</p>
+      <div class="fbox">H₀: p ≥ 0.60<br>Hₐ: p &lt; 0.60（左尾，擔心「低於」放 Hₐ）</div>
+      <span class="tag tag-w">左尾（比例）</span>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ 9.3 ═══════════════════ -->
-<section class="section s-green" id="s93">
-  <h2><span class="badge bg">9.3</span> 母體平均數檢定（σ 未知）—— t 分配</h2>
-  <p>實務中 σ 幾乎不可知，改用樣本標準差 s，統計量服從 <strong>t 分配</strong>（自由度 df = n−1）。</p>
+<!-- ===== 9.2 TYPE I/II ===== -->
+<section id="s92err">
+  <h2>9.2 Type I 與 Type II 誤差
+    <span class="badge" style="background:rgba(249,115,22,.2);color:var(--orange)">LO 9.2</span>
+  </h2>
 
-  <div class="fbox">
-    <div class="fl">t 檢定統計量</div>
-    <div class="fm">t<sub>df</sub> = (x̄ − μ₀) / (s / √n)　，　df = n − 1</div>
-    <div class="fn">s：樣本標準差　條件：母體近似常態 或 n ≥ 30</div>
+  <div class="card s2" style="margin-bottom:1rem">
+    <table class="dt">
+      <thead>
+        <tr><th>決策 \ 真相</th><th>H₀ 為真</th><th>H₀ 為假</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>拒絕 H₀</strong></td><td style="color:#f87171"><strong>Type I 誤差（α）</strong></td><td style="color:#4ade80">正確決策</td></tr>
+        <tr><td><strong>不拒絕 H₀</strong></td><td style="color:#4ade80">正確決策</td><td style="color:#f87171"><strong>Type II 誤差（β）</strong></td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="g2">
-    <div class="card cb">
-      <h3>z 分配 vs t 分配</h3>
-      <ul style="list-style:none;line-height:2;margin-top:6px;">
-        <li>z：σ 已知 → 標準常態</li>
-        <li>t：σ 未知 → t 分配（尾端較厚）</li>
-        <li>df 越大，t 越接近 z</li>
-      </ul>
-    </div>
-    <div class="card cg">
-      <h3>使用時機</h3>
-      <ul style="list-style:none;line-height:2;margin-top:6px;">
-        <li>σ 未知（最常見情況）</li>
-        <li>從樣本計算 s</li>
-        <li>df = n − 1 查 t 表</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- t Calculator -->
-  <div class="calc">
-    <h3><span class="cicon">t</span>&nbsp;互動式 T 檢定計算機（σ 未知）</h3>
-    <div class="cgrid">
-      <div class="cinp"><label>樣本平均數 x̄</label><input type="number" id="t-xbar" value="16.3714" step="0.0001"></div>
-      <div class="cinp"><label>假設均值 μ₀</label><input type="number" id="t-mu0" value="24" step="0.01"></div>
-      <div class="cinp"><label>樣本標準差 s</label><input type="number" id="t-s" value="7.2155" min="0.001" step="0.0001"></div>
-      <div class="cinp"><label>樣本數 n</label><input type="number" id="t-n" value="35" min="2" step="1"></div>
-      <div class="cinp"><label>顯著水準 α</label><input type="number" id="t-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
-      <div class="cinp"><label>尾端類型</label>
-        <select id="t-tail">
-          <option value="right">右尾（Hₐ: μ &gt; μ₀）</option>
-          <option value="left" selected>左尾（Hₐ: μ &lt; μ₀）</option>
-          <option value="two">雙尾（Hₐ: μ ≠ μ₀）</option>
-        </select>
+  <div class="grid2">
+    <div class="card s2">
+      <h3 style="color:var(--orange)">重要關係</h3>
+      <div class="fbox s2">
+        α = P(Type I 誤差) = 顯著水準<br>
+        β = P(Type II 誤差)<br><br>
+        固定 n：α↓ 則 β↑（互相消長）<br>
+        同時降低 α 和 β：只能增加 n
       </div>
     </div>
-    <button class="cbtn" onclick="calcT()">計算 T 檢定</button>
-    <div class="cres" id="t-res">
-      <div class="rgrid" id="t-rg"></div>
-      <div class="dbox" id="t-dec"></div>
-    </div>
-    <div class="cw"><canvas id="t-chart"></canvas></div>
-  </div>
-
-  <div class="ecard">
-    <div class="ehdr eg" onclick="toggleEx(this)">例題 9.8 — 學生讀書時數（左尾，拒絕 H₀）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>系主任主張學生每週讀書 ≥ 24 小時。n=35，x̄=16.3714 hr，s=7.2155，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ ≥ 24 hr</span><span class="pill pha">Hₐ: μ &lt; 24 hr</span></div>
-      <span class="tbadge tleft">左尾檢定</span>
-      <p style="margin-top:10px;">
-        df = 34，t = (16.3714 − 24) / (7.2155/√35) = <strong>−6.260</strong><br>
-        p 值 ≈ P(T ≤ −6.260) ≈ <strong>0.000</strong>（極小）<br>
-        p &lt; 0.05 → <span class="terr">拒絕 H₀</span>
-      </p>
-      <div class="hbox hr">結論：有足夠證據顯示學生平均讀書時數少於 24 小時/週。</div>
-    </div>
-  </div>
-
-  <div class="ecard">
-    <div class="ehdr eg" onclick="toggleEx(this)">例題 9.9 — 學生讀書時數（雙尾，不拒絕 H₀）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>想確認該校學生讀書時數是否與全國均值 14 小時不同。n=35，x̄=16.37，s=7.22，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ = 14 hr</span><span class="pill pha">Hₐ: μ ≠ 14 hr</span></div>
-      <span class="tbadge ttwo">雙尾檢定</span>
-      <p style="margin-top:10px;">
-        t = (16.37 − 14) / (7.22/√35) = <strong>−1.9444</strong><br>
-        p 值 ≈ <strong>0.0600</strong><br>
-        0.0600 &gt; 0.05 → <span class="tok">不拒絕 H₀</span>
-      </p>
-      <div class="hbox hg">結論：在 5% 顯著水準下，無法認定讀書時數與全國 14 小時不同。</div>
+    <div class="card s2">
+      <h3 style="color:var(--orange)">例題 9.5｜實體店開設決策</h3>
+      <p style="font-size:.85rem">H₀: μ ≤ 500（不開店），Hₐ: μ &gt; 500（開店）</p>
+      <div class="fbox s2" style="font-size:.83rem">
+        Type I 誤差：μ ≤ 500 但拒絕 H₀<br>
+        → 開了店但人流不足，虧損<br><br>
+        Type II 誤差：μ &gt; 500 但不拒絕 H₀<br>
+        → 沒開店但其實人流充足，錯失機會
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ 9.4 ═══════════════════ -->
-<section class="section s-purple" id="s94">
-  <h2><span class="badge bp">9.4</span> 母體比例的假設檢定</h2>
-  <p>關心類別變數比例 p 時，使用以下 z 統計量（估計量：<span class="mi">p̂ = x / n</span>）。</p>
+<!-- ===== 9.2 Z-TEST ===== -->
+<section id="s92z">
+  <h2>9.2 μ 的假設檢定（σ 已知，z 檢定）
+    <span class="badge" style="background:rgba(59,130,246,.2);color:var(--blue)">LO 9.3</span>
+  </h2>
 
-  <div class="fbox">
-    <div class="fl">比例檢定統計量</div>
-    <div class="fm">z = (p̂ − p₀) / √( p₀(1−p₀) / n )</div>
-    <div class="fn">使用條件：np₀ &gt; 5　且　n(1−p₀) &gt; 5</div>
+  <div class="grid2">
+    <div class="card s1">
+      <h3>檢定統計量</h3>
+      <div class="fbox">z = (x̄ − μ₀) / (σ/√n)</div>
+      <p style="font-size:.83rem;color:var(--sub)">適用條件：X̄ 服從常態分配（母體常態，或 n ≥ 30）</p>
+    </div>
+    <div class="card s1">
+      <h3>信賴區間法（雙尾）</h3>
+      <div class="fbox">x̄ ± z<sub>α/2</sub> × σ/√n<br><br>
+        拒絕 H₀：若 μ₀ 不在 CI 內<br>
+        不拒絕 H₀：若 μ₀ 在 CI 內</div>
+    </div>
   </div>
 
-  <!-- Proportion Calculator -->
-  <div class="calc">
-    <h3><span class="cicon">p</span>&nbsp;互動式比例檢定計算機</h3>
-    <div class="cgrid">
-      <div class="cinp"><label>成功次數 x</label><input type="number" id="p-x" value="67" min="0" step="1"></div>
-      <div class="cinp"><label>樣本數 n</label><input type="number" id="p-n" value="180" min="1" step="1"></div>
-      <div class="cinp"><label>假設比例 p₀</label><input type="number" id="p-p0" value="0.40" min="0.001" max="0.999" step="0.01"></div>
-      <div class="cinp"><label>顯著水準 α</label><input type="number" id="p-alpha" value="0.05" min="0.001" max="0.5" step="0.01"></div>
-      <div class="cinp"><label>尾端類型</label>
-        <select id="p-tail">
-          <option value="right">右尾（Hₐ: p &gt; p₀）</option>
-          <option value="left" selected>左尾（Hₐ: p &lt; p₀）</option>
-          <option value="two">雙尾（Hₐ: p ≠ p₀）</option>
-        </select>
+  <div class="step-box" style="margin-top:1rem">
+    <p style="font-weight:700;margin-bottom:.5rem;color:var(--blue)">p-value 法四步驟</p>
+    <div class="step-row"><div class="sn">1</div><div>設定 H₀ 和 Hₐ（確認單/雙尾、包含等號在 H₀）</div></div>
+    <div class="step-row"><div class="sn">2</div><div>設定顯著水準 α</div></div>
+    <div class="step-row"><div class="sn">3</div><div>計算 z 統計量與 p-value</div></div>
+    <div class="step-row"><div class="sn">4</div><div>結論：p &lt; α → 拒絕 H₀；p ≥ α → 不拒絕 H₀</div></div>
+  </div>
+
+  <h3 style="margin-top:1.5rem;color:var(--sub)">例題</h3>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.6｜返校支出是否異於 $606.40？（雙尾，σ=65，n=30）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>研究分析師認為支出與 $606.40 不同。n=30，x̄=$622.85，σ=$65，α=0.05</p>
+      <div class="fbox" style="font-size:.85rem">
+        H₀: μ = 606.40，Hₐ: μ ≠ 606.40<br><br>
+        z = (622.85 − 606.40) / (65/√30) = 16.45 / 11.863 = 1.3862<br><br>
+        雙尾 p-value = 2×P(Z ≥ 1.3862) = 2×(1 − 0.9172) = <strong>0.1657</strong><br><br>
+        0.1657 &gt; 0.05 → <span class="norej">不拒絕 H₀</span>
       </div>
-    </div>
-    <button class="cbtn" onclick="calcProp()">計算比例檢定</button>
-    <div class="cres" id="p-res">
-      <div class="rgrid" id="p-rg"></div>
-      <div class="dbox" id="p-dec"></div>
-    </div>
-    <div class="cw"><canvas id="p-chart"></canvas></div>
-  </div>
-
-  <div class="ecard">
-    <div class="ehdr ep" onclick="toggleEx(this)">例題 9.10 — 環保生活方式（左尾，不拒絕）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>雜誌聲稱少於 40% 家庭因環保改變生活方式。n=180，67 戶確實改變，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: p ≥ 0.40</span><span class="pill pha">Hₐ: p &lt; 0.40</span></div>
-      <span class="tbadge tleft">左尾檢定</span>
-      <p style="margin-top:10px;">
-        p̂ = 67/180 = 0.3722<br>
-        z = (0.3722 − 0.40) / √(0.40×0.60/180) = <strong>−0.7607</strong><br>
-        p 值 = P(Z ≤ −0.7607) = <strong>0.2234</strong><br>
-        0.2234 &gt; 0.05 → <span class="tok">不拒絕 H₀</span>
-      </p>
-      <div class="hbox hg">結論：無足夠證據支持環保改變比例低於 40%。</div>
+      <span class="tag tag-n">不拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.83rem;margin-top:.5rem">樣本資料不支持返校支出異於 $606.40 的主張。</p>
     </div>
   </div>
-
-  <div class="ecard">
-    <div class="ehdr ep" onclick="toggleEx(this)">例題 9.11 — 大麻合法化支持率（雙尾，α=0.10 拒絕）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>全國 67% 支持大麻合法化。俄亥俄州 200 人中 122 人支持，α=0.10</p>
-      <div class="hline"><span class="pill ph0">H₀: p = 0.67</span><span class="pill pha">Hₐ: p ≠ 0.67</span></div>
-      <span class="tbadge ttwo">雙尾檢定</span>
-      <p style="margin-top:10px;">
-        p̂ = 122/200 = 0.61<br>
-        z = (0.61 − 0.67) / √(0.67×0.33/200) = <strong>−1.8046</strong><br>
-        p 值 = 2×P(Z ≤ −1.8046) = <strong>0.0711</strong><br>
-        0.0711 &lt; 0.10 → <span class="terr">拒絕 H₀</span>
-      </p>
-      <div class="hbox hr">結論：在 10% 顯著水準下，俄亥俄州支持率與全國 67% 有顯著差異。</div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.7｜用 CI 法重做例題 9.6</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>n=30，x̄=622.85，σ=65，α=0.05，z<sub>0.025</sub>=1.96</p>
+      <div class="fbox" style="font-size:.85rem">
+        CI = 622.85 ± 1.96 × (65/√30)<br>
+           = 622.85 ± 23.26<br>
+           = [599.59, 646.11]<br><br>
+        μ₀ = 606.40 ∈ [599.59, 646.11] → <span class="norej">不拒絕 H₀</span>
+      </div>
+      <p style="color:var(--sub);font-size:.83rem;margin-top:.5rem">與 p-value 法結論相同。CI 法只適用於雙尾檢定。</p>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ 9.5 ═══════════════════ -->
-<section class="section" id="s95">
-  <h2><span class="badge">9.5</span> 臨界值法（Critical Value Approach）</h2>
-  <p>臨界值法與 p 值法在相同問題下<strong>結論永遠一致</strong>，只是比較方式不同。</p>
+<!-- ===== 9.3 T-TEST ===== -->
+<section id="s93t">
+  <h2>9.3 μ 的假設檢定（σ 未知，t 檢定）
+    <span class="badge" style="background:rgba(168,85,247,.2);color:var(--purple)">LO 9.4</span>
+  </h2>
 
-  <table class="cmp" style="margin-top:12px;">
-    <tr><th></th><th>p 值法</th><th>臨界值法</th></tr>
-    <tr><td><strong>比較對象</strong></td><td>p 值 vs α</td><td>檢定統計量 vs 臨界值</td></tr>
-    <tr><td><strong>拒絕條件</strong></td><td>p 值 &lt; α</td><td>統計量落入拒絕區域</td></tr>
-    <tr><td><strong>常用場景</strong></td><td>統計軟體（Excel、R）</td><td>查表手算</td></tr>
-  </table>
-
-  <table style="margin-top:14px;">
-    <tr><th>檢定類型</th><th>z 臨界值</th><th>拒絕條件</th></tr>
-    <tr><td>左尾</td><td>−z<sub>α</sub></td><td>z &lt; −z<sub>α</sub></td></tr>
-    <tr><td>右尾</td><td>z<sub>α</sub></td><td>z &gt; z<sub>α</sub></td></tr>
-    <tr><td>雙尾</td><td>±z<sub>α/2</sub></td><td>|z| &gt; z<sub>α/2</sub></td></tr>
-  </table>
-
-  <!-- Critical Value Interactive Chart -->
-  <div class="calc">
-    <h3><span class="cicon">⚡</span>&nbsp;互動式臨界值圖</h3>
-    <div class="cgrid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));">
-      <div class="cinp">
-        <label>顯著水準 α = <span id="cv-aval">0.05</span></label>
-        <input type="range" id="cv-alpha" min="1" max="20" value="5" style="width:100%;margin-top:8px;" oninput="updateCV()">
-      </div>
-      <div class="cinp"><label>尾端類型</label>
-        <select id="cv-tail" onchange="updateCV()">
-          <option value="right">右尾</option>
-          <option value="left">左尾</option>
-          <option value="two">雙尾</option>
-        </select>
-      </div>
-      <div class="cinp"><label>分配</label>
-        <select id="cv-dist" onchange="updateCV()">
-          <option value="z">Z 分配（σ已知）</option>
-          <option value="t">t 分配（σ未知）</option>
-        </select>
-      </div>
-      <div class="cinp" id="cv-dfwrap" style="display:none;">
-        <label>自由度 df</label>
-        <input type="number" id="cv-df" value="30" min="1" step="1" oninput="updateCV()">
-      </div>
-    </div>
-    <div class="cw tall"><canvas id="cv-chart"></canvas></div>
-    <div class="hbox" id="cv-info" style="margin-top:10px;"></div>
+  <div class="card s3">
+    <h3 style="color:var(--purple)">檢定統計量</h3>
+    <div class="fbox s3">t<sub>df</sub> = (x̄ − μ₀) / (s/√n)，df = n − 1</div>
+    <p style="font-size:.83rem;color:var(--sub)">用樣本標準差 s 取代 σ，改用 t 分配。X̄ 需近似常態（母體常態或 n ≥ 30）。</p>
   </div>
 
-  <h3 style="margin:18px 0 10px;">常用臨界值對照表</h3>
-  <table>
-    <tr><th>α</th><th>雙尾 z<sub>α/2</sub></th><th>單尾 z<sub>α</sub></th><th>t<sub>α,30</sub>（df=30）</th><th>t<sub>α,60</sub>（df=60）</th></tr>
-    <tr><td>0.10</td><td>1.645</td><td>1.282</td><td>1.310</td><td>1.296</td></tr>
-    <tr><td>0.05</td><td>1.960</td><td>1.645</td><td>1.697</td><td>1.671</td></tr>
-    <tr><td>0.01</td><td>2.576</td><td>2.326</td><td>2.457</td><td>2.390</td></tr>
-  </table>
-
-  <div class="ecard">
-    <div class="ehdr" onclick="toggleEx(this)">例題 9.12 — 開學採購（臨界值法，雙尾，z）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>同例 9.6。n=30，x̄=622.85，σ=65，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ = 606.40</span><span class="pill pha">Hₐ: μ ≠ 606.40</span></div>
-      <p style="margin-top:10px;">
-        臨界值：±z<sub>0.025</sub> = <strong>±1.96</strong>，拒絕域：z &lt; −1.96 或 z &gt; 1.96<br>
-        z = 1.3862　→　−1.96 &lt; 1.3862 &lt; 1.96　→　<span class="tok">不拒絕 H₀</span>（結論同 p 值法）
-      </p>
+  <h3 style="margin-top:1.5rem;color:var(--sub)">例題</h3>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.8｜學生讀書時間是否低於 24 小時？（左尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>助理院長想確認大學生讀書時間是否低於 1961 年全國平均 24 小時/週。</p>
+      <p>n=35，x̄=16.3714，s=7.2155，α=0.05</p>
+      <div class="fbox s3" style="font-size:.85rem">
+        H₀: μ ≥ 24，Hₐ: μ &lt; 24（左尾）<br><br>
+        df = 35 − 1 = 34<br>
+        t₃₄ = (16.3714 − 24) / (7.2155/√35) = −7.6286 / 1.2197 = <strong>−6.255</strong><br><br>
+        p-value = P(T₃₄ ≤ −6.255) &lt; 0.005（遠小於任何合理 α）<br><br>
+        p &lt; 0.05 → <span class="rej">拒絕 H₀</span>
+      </div>
+      <span class="tag tag-r">拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.83rem;margin-top:.5rem">在 5% 顯著水準下，可認為大學生讀書時間顯著低於 24 小時/週。</p>
     </div>
   </div>
-
-  <div class="ecard">
-    <div class="ehdr" onclick="toggleEx(this)">例題 9.13 — 讀書時數（臨界值法，左尾，t）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>同例 9.8。n=35，x̄=16.3714，s=7.2155，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: μ ≥ 24</span><span class="pill pha">Hₐ: μ &lt; 24</span></div>
-      <p style="margin-top:10px;">
-        df=34，臨界值：−t<sub>0.05,34</sub> = <strong>−1.691</strong>，拒絕域：t &lt; −1.691<br>
-        t = −6.260　→　−6.260 &lt; −1.691　→　<span class="terr">拒絕 H₀</span>（結論同 p 值法）
-      </p>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.9｜讀書時間是否異於今日全國平均 14 小時？（雙尾）</span><span class="arr">▼</span>
     </div>
-  </div>
-
-  <div class="ecard">
-    <div class="ehdr" onclick="toggleEx(this)">例題 9.14 — 環保比例（臨界值法，左尾，z）<span class="etog">▼</span></div>
-    <div class="ebody">
-      <p>同例 9.10。n=180，p₀=0.40，α=0.05</p>
-      <div class="hline"><span class="pill ph0">H₀: p ≥ 0.40</span><span class="pill pha">Hₐ: p &lt; 0.40</span></div>
-      <p style="margin-top:10px;">
-        臨界值：−z<sub>0.05</sub> = <strong>−1.645</strong>，拒絕域：z &lt; −1.645<br>
-        z = −0.7613　→　−0.7613 &gt; −1.645　→　<span class="tok">不拒絕 H₀</span>（結論同 p 值法）
-      </p>
+    <div class="ex-b">
+      <p>n=35，x̄=16.3714，s=7.2155，μ₀=14，α=0.05</p>
+      <div class="fbox s3" style="font-size:.85rem">
+        H₀: μ = 14，Hₐ: μ ≠ 14（雙尾）<br><br>
+        t₃₄ = (16.3714 − 14) / (7.2155/√35) = 2.3714 / 1.2197 = <strong>1.9444</strong><br><br>
+        p-value = 2×P(T₃₄ ≥ 1.9444) = <strong>0.0602</strong><br><br>
+        0.0602 &gt; 0.05 → <span class="norej">不拒絕 H₀</span>
+      </div>
+      <span class="tag tag-n">不拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.83rem;margin-top:.5rem">在 5% 顯著水準下，無法認為讀書時間與今日全國平均 14 小時不同。</p>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════ 9.6 ═══════════════════ -->
-<section class="section s-dark" id="s96">
-  <h2><span class="badge bd">9.6</span> 數字的溝通 — 案例研究（所得不平等）</h2>
-  <p>某地方政治人物宣稱：<br>
-    ① 低收入家庭<strong>平均薪資已低於</strong> 2017 年均值 $50,000<br>
-    ② <strong>超過 20% 家庭</strong>收入低於 $30,000</p>
-  <p style="margin-top:10px;">調查 n=36 戶低收入家庭：x̄=$47,278、s=$19,524；8 戶（22.2%）低於 $30,000</p>
+<!-- ===== 9.4 PROPORTION ===== -->
+<section id="s94p">
+  <h2>9.4 母體比例的假設檢定
+    <span class="badge" style="background:rgba(20,184,166,.2);color:var(--teal)">LO 9.5</span>
+  </h2>
 
-  <table style="margin-top:14px;">
-    <tr>
-      <th>假設（Hₐ 為政治人物的主張）</th>
-      <th>檢定統計量</th>
-      <th>p 值</th>
-      <th>結論（α=0.05）</th>
-    </tr>
-    <tr>
-      <td>H₀: μ ≥ 50,000<br>Hₐ: μ &lt; 50,000</td>
-      <td>t = (47278−50000)/(19524/√36) = −0.837</td>
-      <td>0.204</td>
-      <td class="tok">不拒絕 H₀</td>
-    </tr>
-    <tr>
-      <td>H₀: p ≤ 0.20<br>Hₐ: p &gt; 0.20</td>
-      <td>z = (0.222−0.20)/√(0.20×0.80/36) = 0.333</td>
-      <td>0.369</td>
-      <td class="tok">不拒絕 H₀</td>
-    </tr>
-  </table>
-
-  <div class="hbox hr" style="margin-top:14px;">
-    <strong>統計結論：</strong>兩項聲稱均無法以樣本資料在統計上成立。政治人物的說法可能基於表面數字觀察，而非嚴謹的假設檢定。
+  <div class="card s4">
+    <h3 style="color:var(--teal)">檢定統計量</h3>
+    <div class="fbox s4">
+      z = (p̄ − p₀) / √(p₀(1−p₀)/n)<br><br>
+      p̄ = x/n（樣本比例）<br>
+      p₀ = 假設母體比例
+    </div>
+    <p style="font-size:.83rem;color:var(--sub)">使用 z 分配。適用條件：np₀ ≥ 5 且 n(1−p₀) ≥ 5。</p>
   </div>
 
-  <div class="hbox" style="margin-top:12px;">
-    <strong>本案例啟示：</strong>p 值不僅是數字，更是溝通工具。在公共政策討論中，提供檢定統計量與 p 值可增強論述的說服力與可信度。
+  <div class="ex" style="margin-top:1rem">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.14｜改變生活方式的比例是否低於 40%？（左尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <p>一雜誌宣稱美國不到 40% 家庭因環保而改變生活方式。調查 n=180，67 戶有改變。α=0.05</p>
+      <div class="fbox s4" style="font-size:.85rem">
+        H₀: p ≥ 0.40，Hₐ: p &lt; 0.40（左尾）<br><br>
+        p̄ = 67/180 = 0.3722<br>
+        z = (0.3722 − 0.40) / √(0.40×0.60/180)<br>
+          = −0.0278 / 0.03651 = <strong>−0.7613</strong><br><br>
+        p-value = P(Z ≤ −0.7613) = <strong>0.2233</strong><br><br>
+        0.2233 &gt; 0.05 → <span class="norej">不拒絕 H₀</span>
+      </div>
+      <span class="tag tag-n">不拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.83rem;margin-top:.5rem">無法認為比例顯著低於 40%。</p>
+    </div>
   </div>
 </section>
 
-<!-- ═══════════════════ Summary ═══════════════════ -->
-<section class="section" id="summary">
-  <h2>章節公式摘要</h2>
-  <div class="frow"><div class="ftype">Z 檢定（μ，σ已知）</div><div class="fexpr">z = (x̄ − μ₀) / (σ/√n)</div><div class="fcond">∼ 標準常態 Z</div></div>
-  <div class="frow"><div class="ftype">T 檢定（μ，σ未知）</div><div class="fexpr">t = (x̄ − μ₀) / (s/√n)，df = n−1</div><div class="fcond">∼ t 分配</div></div>
-  <div class="frow"><div class="ftype">比例 Z 檢定</div><div class="fexpr">z = (p̂ − p₀) / √(p₀(1−p₀)/n)</div><div class="fcond">np₀&gt;5 且 n(1−p₀)&gt;5</div></div>
-  <div class="frow"><div class="ftype">95% 信賴區間（σ已知）</div><div class="fexpr">x̄ ± 1.96 × σ/√n</div><div class="fcond">雙尾用於判斷是否拒絕</div></div>
+<!-- ===== 9.5 CRITICAL VALUE ===== -->
+<section id="s95cv">
+  <h2>9.5 臨界值法
+    <span class="badge" style="background:rgba(34,197,94,.2);color:var(--green)">LO 9.3–9.5</span>
+  </h2>
+  <p style="color:var(--sub);margin-bottom:1rem">與 p-value 法結論永遠相同，差別在步驟 2 找臨界值、步驟 4 比較統計量落點。</p>
 
-  <table style="margin-top:18px;">
-    <tr><th>方法</th><th>右尾拒絕條件</th><th>左尾拒絕條件</th><th>雙尾拒絕條件</th></tr>
-    <tr><td><strong>p 值法</strong></td><td>P(Z≥z) &lt; α</td><td>P(Z≤z) &lt; α</td><td>2P(Z≥|z|) &lt; α</td></tr>
-    <tr><td><strong>臨界值法</strong></td><td>z &gt; z<sub>α</sub></td><td>z &lt; −z<sub>α</sub></td><td>|z| &gt; z<sub>α/2</sub></td></tr>
-  </table>
+  <div class="card s5">
+    <table class="dt">
+      <thead><tr><th>檢定類型</th><th>z 臨界值</th><th>拒絕條件</th></tr></thead>
+      <tbody>
+        <tr><td>右尾</td><td>z<sub>α</sub></td><td>z &gt; z<sub>α</sub></td></tr>
+        <tr><td>左尾</td><td>−z<sub>α</sub></td><td>z &lt; −z<sub>α</sub></td></tr>
+        <tr><td>雙尾</td><td>±z<sub>α/2</sub></td><td>|z| &gt; z<sub>α/2</sub></td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:.82rem;color:var(--sub);margin-top:.6rem">t 檢定時，將 z 換成 t<sub>α,df</sub>，方法相同。</p>
+  </div>
 
-  <!-- p-value vs alpha interactive scatter -->
-  <p style="font-weight:700;margin:20px 0 8px;">各例題 p 值總覽（點擊可查看例題）</p>
-  <div class="cw tall"><canvas id="sum-chart"></canvas></div>
+  <h3 style="margin-top:1.5rem;color:var(--sub)">例題</h3>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.12｜用臨界值法重做例題 9.6（z 檢定，雙尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <div class="fbox s5" style="font-size:.85rem">
+        α=0.05，雙尾 → 臨界值 ±z<sub>0.025</sub> = ±1.96<br>
+        決策規則：|z| &gt; 1.96 則拒絕 H₀<br><br>
+        z = 1.3862<br>
+        −1.96 &lt; 1.3862 &lt; 1.96 → <span class="norej">不拒絕 H₀</span>
+      </div>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.13｜用臨界值法重做例題 9.8（t 檢定，左尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <div class="fbox s5" style="font-size:.85rem">
+        α=0.05，左尾，df=34 → 臨界值 −t<sub>0.05,34</sub> = −1.691<br>
+        決策規則：t &lt; −1.691 則拒絕 H₀<br><br>
+        t = −6.255 &lt; −1.691 → <span class="rej">拒絕 H₀</span>
+      </div>
+    </div>
+  </div>
+  <div class="ex">
+    <div class="ex-h" onclick="tog(this)">
+      <span>例題 9.14｜用臨界值法重做比例檢定（左尾）</span><span class="arr">▼</span>
+    </div>
+    <div class="ex-b">
+      <div class="fbox s5" style="font-size:.85rem">
+        α=0.05，左尾 → 臨界值 −z<sub>0.05</sub> = −1.645<br>
+        決策規則：z &lt; −1.645 則拒絕 H₀<br><br>
+        z = −0.7613 &gt; −1.645 → <span class="norej">不拒絕 H₀</span>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- ═══════════════════ Quiz ═══════════════════ -->
-<section class="section" id="quiz">
-  <h2>自我測驗（5 題）</h2>
+<!-- ===== 9.6 CASE ===== -->
+<section id="s96">
+  <h2>9.6 案例研究｜美國所得不平等</h2>
+  <div class="card" style="border-color:rgba(249,115,22,.3)">
+    <p style="margin-bottom:.8rem">地方政客宣稱：① 低收入家庭平均所得低於 2017 年的 $50,000；② 所得低於 $30,000 的比例超過 20%。</p>
+    <p style="color:var(--sub);font-size:.85rem;margin-bottom:.8rem">樣本：n=36 戶，x̄=$47,278，s=$19,524，低於 $30,000 的家庭 8 戶（p̄=8/36=0.222）</p>
+    <table class="dt">
+      <thead><tr><th>假設</th><th>統計量</th><th>p-value</th><th>結論（α=0.05）</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>H₀: μ≥50,000<br>Hₐ: μ&lt;50,000</td>
+          <td>t₃₅ = (47278−50000)/(19524/√36) = <strong>−0.837</strong></td>
+          <td>0.204</td>
+          <td><span class="tag tag-n">不拒絕 H₀</span></td>
+        </tr>
+        <tr>
+          <td>H₀: p≤0.20<br>Hₐ: p&gt;0.20</td>
+          <td>z = (0.222−0.20)/√(0.20×0.80/36) = <strong>0.333</strong></td>
+          <td>0.369</td>
+          <td><span class="tag tag-n">不拒絕 H₀</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:.83rem;color:var(--sub);margin-top:.7rem">兩項主張皆無法在統計上獲得支持——政客的說法可能只是基於樣本統計量的直觀觀察，而非嚴謹的假設檢定。</p>
+  </div>
+</section>
 
-  <div class="qcard" id="q1">
-    <h3>Q1　σ 未知時，應使用哪種統計量？</h3>
-    <div class="qopts">
-      <div class="qopt" onclick="chkQ(this,'q1',false)">z 統計量（標準常態）</div>
-      <div class="qopt" onclick="chkQ(this,'q1',true)">t 統計量（t 分配，df = n−1）</div>
-      <div class="qopt" onclick="chkQ(this,'q1',false)">F 統計量</div>
+<!-- ===== CALCULATOR ===== -->
+<section id="calc">
+  <h2>互動計算機</h2>
+  <div class="card s1">
+    <div class="tabs">
+      <div class="tb on" onclick="swTab('tz','calcTab')">z 檢定（σ已知）</div>
+      <div class="tb" onclick="swTab('tt','calcTab')">t 檢定（σ未知）</div>
+      <div class="tb" onclick="swTab('tp','calcTab')">比例檢定</div>
     </div>
-    <div class="qres" id="q1-r"></div><button class="qreset" onclick="rstQ('q1')">重置</button>
+
+    <!-- Z TAB -->
+    <div id="tz" class="tc on">
+      <div class="grid2">
+        <div>
+          <label>樣本均值 x̄</label><input id="z_xbar" type="number" value="622.85">
+          <label>假設均值 μ₀</label><input id="z_mu0" type="number" value="606.40">
+          <label>母體標準差 σ</label><input id="z_sigma" type="number" value="65">
+          <label>樣本數 n</label><input id="z_n" type="number" value="30">
+          <label>顯著水準 α</label>
+          <select id="z_alpha"><option value="0.10">0.10</option><option value="0.05" selected>0.05</option><option value="0.01">0.01</option></select>
+          <label>檢定方向</label>
+          <select id="z_tail">
+            <option value="two">雙尾（Hₐ: μ ≠ μ₀）</option>
+            <option value="right">右尾（Hₐ: μ &gt; μ₀）</option>
+            <option value="left">左尾（Hₐ: μ &lt; μ₀）</option>
+          </select>
+          <button class="btn1" onclick="calcZ()">執行 z 檢定</button>
+        </div>
+        <div><div class="chart-wrap"><canvas id="zChart"></canvas></div></div>
+      </div>
+      <div class="result" id="zResult"></div>
+    </div>
+
+    <!-- T TAB -->
+    <div id="tt" class="tc">
+      <div class="grid2">
+        <div>
+          <label>樣本均值 x̄</label><input id="t_xbar" type="number" value="16.3714">
+          <label>假設均值 μ₀</label><input id="t_mu0" type="number" value="24">
+          <label>樣本標準差 s</label><input id="t_s" type="number" value="7.2155">
+          <label>樣本數 n</label><input id="t_n" type="number" value="35">
+          <label>顯著水準 α</label>
+          <select id="t_alpha"><option value="0.10">0.10</option><option value="0.05" selected>0.05</option><option value="0.01">0.01</option></select>
+          <label>檢定方向</label>
+          <select id="t_tail">
+            <option value="two">雙尾</option>
+            <option value="right">右尾</option>
+            <option value="left" selected>左尾</option>
+          </select>
+          <button class="btn3" onclick="calcT()">執行 t 檢定</button>
+        </div>
+        <div><div class="chart-wrap"><canvas id="tChart"></canvas></div></div>
+      </div>
+      <div class="result" id="tResult"></div>
+    </div>
+
+    <!-- P TAB -->
+    <div id="tp" class="tc">
+      <div class="grid2">
+        <div>
+          <label>樣本成功次數 x</label><input id="p_x" type="number" value="67">
+          <label>樣本數 n</label><input id="p_n" type="number" value="180">
+          <label>假設比例 p₀</label><input id="p_p0" type="number" step="0.01" value="0.40">
+          <label>顯著水準 α</label>
+          <select id="p_alpha"><option value="0.10">0.10</option><option value="0.05" selected>0.05</option><option value="0.01">0.01</option></select>
+          <label>檢定方向</label>
+          <select id="p_tail">
+            <option value="two">雙尾</option>
+            <option value="right">右尾</option>
+            <option value="left" selected>左尾</option>
+          </select>
+          <button class="btn4" onclick="calcP()">執行比例檢定</button>
+        </div>
+        <div><div class="chart-wrap"><canvas id="pChart"></canvas></div></div>
+      </div>
+      <div class="result" id="pResult"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="summary">
+  <h2>公式總整理</h2>
+  <div style="overflow-x:auto">
+  <table class="dt">
+    <thead><tr><th>情境</th><th>統計量</th><th>分配</th><th>p-value（右尾）</th></tr></thead>
+    <tbody>
+      <tr><td>μ，σ已知</td><td>z = (x̄−μ₀)/(σ/√n)</td><td>Z（標準常態）</td><td>P(Z ≥ z)</td></tr>
+      <tr><td>μ，σ未知</td><td>t = (x̄−μ₀)/(s/√n)</td><td>t<sub>n−1</sub></td><td>P(T<sub>df</sub> ≥ t)</td></tr>
+      <tr><td>比例 p</td><td>z = (p̄−p₀)/√(p₀(1−p₀)/n)</td><td>Z（標準常態）</td><td>P(Z ≥ z)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="highlight-box" style="margin-top:1rem">
+    <p style="font-weight:700;margin-bottom:.5rem">雙尾 p-value 計算</p>
+    <p>z &gt; 0：p = 2 × P(Z ≥ z) ｜ z &lt; 0：p = 2 × P(Z ≤ z)</p>
+  </div>
+</section>
+
+<!-- ===== PROF ===== -->
+<section id="prof">
+  <h2>🎓 教授觀點｜期中考重點分析</h2>
+
+  <div class="prof-card">
+    <h3>📌 這章的核心邏輯只有一條</h3>
+    <p>所有假設檢定，不管是 z、t 還是比例，都是同一個流程：</p>
+    <div class="fbox" style="margin-top:.7rem;border-left-color:#60a5fa">
+      建立假設 → 算統計量 → 算 p-value → 跟 α 比較 → 做結論
+    </div>
+    <p style="margin-top:.7rem;color:var(--sub);font-size:.88rem">差別只在「用哪個統計量」和「查哪個分配」。掌握這條主線，三種檢定全部迎刃而解。</p>
   </div>
 
-  <div class="qcard" id="q2">
-    <h3>Q2　右尾檢定，z = 2.10，p 值 ≈ 0.018，α = 0.05，結論？</h3>
-    <div class="qopts">
-      <div class="qopt" onclick="chkQ(this,'q2',true)">拒絕 H₀（0.018 &lt; 0.05）</div>
-      <div class="qopt" onclick="chkQ(this,'q2',false)">不拒絕 H₀（0.018 &lt; 0.05 不成立）</div>
-      <div class="qopt" onclick="chkQ(this,'q2',false)">接受 H₀</div>
+  <div class="prof-card">
+    <h3>⚠️ 考試最常失分的地方</h3>
+    <div class="highlight-box red" style="margin-top:.5rem">
+      <p><strong>1. H₀ 和 Hₐ 設錯</strong>：等號（=, ≤, ≥）永遠在 H₀，想要建立的主張永遠在 Hₐ。</p>
     </div>
-    <div class="qres" id="q2-r"></div><button class="qreset" onclick="rstQ('q2')">重置</button>
+    <div class="highlight-box" style="margin-top:.5rem">
+      <p><strong>2. 雙尾忘記乘以 2</strong>：雙尾 p-value = 2 × 單尾面積。</p>
+    </div>
+    <div class="highlight-box blue" style="margin-top:.5rem">
+      <p><strong>3. σ 已知用 z，σ 未知用 t</strong>：這題目會直接告訴你，別看漏了。</p>
+    </div>
+    <div class="highlight-box green" style="margin-top:.5rem">
+      <p><strong>4. 結論用字</strong>：拒絕 H₀ → 支持 Hₐ；不拒絕 H₀ → 不能支持 Hₐ（不是「接受 H₀」）。</p>
+    </div>
   </div>
 
-  <div class="qcard" id="q3">
-    <h3>Q3　比例檢定常態近似的條件？</h3>
-    <div class="qopts">
-      <div class="qopt" onclick="chkQ(this,'q3',false)">n &gt; 30</div>
-      <div class="qopt" onclick="chkQ(this,'q3',false)">p₀ &gt; 0.5</div>
-      <div class="qopt" onclick="chkQ(this,'q3',true)">np₀ &gt; 5 且 n(1−p₀) &gt; 5</div>
+  <div class="prof-card">
+    <h3>🗺️ 本章架構一張圖</h3>
+    <div class="fbox" style="font-size:.85rem;line-height:2">
+      假設檢定<br>
+      ├── 設定 H₀/Hₐ（9.1）<br>
+      ├── 型誤差概念（9.2）── α（Type I） vs β（Type II）<br>
+      ├── 執行檢定<br>
+      │   ├── μ，σ已知 → z 統計量（9.2節）<br>
+      │   ├── μ，σ未知 → t 統計量，df=n−1（9.3節）<br>
+      │   └── 比例 p → z 統計量，用 p₀ 計算 SE（9.4節）<br>
+      ├── 兩種方法（9.5）<br>
+      │   ├── p-value 法：p &lt; α → 拒絕（主流）<br>
+      │   └── 臨界值法：統計量落入拒絕域 → 拒絕（同樣結論）<br>
+      └── 雙尾檢定可用 CI 法輔助驗證
     </div>
-    <div class="qres" id="q3-r"></div><button class="qreset" onclick="rstQ('q3')">重置</button>
   </div>
 
-  <div class="qcard" id="q4">
-    <h3>Q4　雙尾 z 檢定（α=0.05）的臨界值為？</h3>
-    <div class="qopts">
-      <div class="qopt" onclick="chkQ(this,'q4',false)">±1.282</div>
-      <div class="qopt" onclick="chkQ(this,'q4',false)">±1.645</div>
-      <div class="qopt" onclick="chkQ(this,'q4',true)">±1.960</div>
-    </div>
-    <div class="qres" id="q4-r"></div><button class="qreset" onclick="rstQ('q4')">重置</button>
+  <div class="prof-card">
+    <h3>💡 p-value vs 臨界值法：怎麼選？</h3>
+    <table class="dt" style="margin-top:.5rem">
+      <thead><tr><th></th><th>p-value 法</th><th>臨界值法</th></tr></thead>
+      <tbody>
+        <tr><td>現實使用</td><td>軟體輸出（Excel/R）</td><td>手算、查表</td></tr>
+        <tr><td>考試場合</td><td>給定 p-value 時直接用</td><td>只給 α 時推算</td></tr>
+        <tr><td>結論</td><td colspan="2" style="text-align:center">永遠相同</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="qcard" id="q5">
-    <h3>Q5　p 值法與臨界值法在相同問題下的結論？</h3>
-    <div class="qopts">
-      <div class="qopt" onclick="chkQ(this,'q5',false)">可能不同，取決於計算精度</div>
-      <div class="qopt" onclick="chkQ(this,'q5',true)">永遠相同</div>
-      <div class="qopt" onclick="chkQ(this,'q5',false)">臨界值法較保守</div>
-    </div>
-    <div class="qres" id="q5-r"></div><button class="qreset" onclick="rstQ('q5')">重置</button>
+  <div class="prof-card">
+    <h3>📊 三種檢定比較</h3>
+    <table class="dt" style="margin-top:.5rem">
+      <thead><tr><th>檢定</th><th>統計量</th><th>分配</th><th>SE公式</th></tr></thead>
+      <tbody>
+        <tr><td>z（σ已知）</td><td>(x̄−μ₀)/(σ/√n)</td><td>Z</td><td>σ/√n</td></tr>
+        <tr><td>t（σ未知）</td><td>(x̄−μ₀)/(s/√n)</td><td>t<sub>n−1</sub></td><td>s/√n</td></tr>
+        <tr><td>比例</td><td>(p̄−p₀)/SE</td><td>Z</td><td>√(p₀(1−p₀)/n)</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:.82rem;color:var(--sub);margin-top:.6rem">比例檢定的 SE 用 <strong>p₀</strong>（假設值）而非 p̄，這是常見混淆點。</p>
+  </div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="quiz">
+  <h2>自我測驗</h2>
+  <div class="quiz-q">
+    <p>1. 下列何者關於 H₀ 的敘述正確？</p>
+    <div class="qopt" onclick="ans(this,true)">H₀ 永遠包含等號（=、≤ 或 ≥）</div>
+    <div class="qopt" onclick="ans(this,false)">H₀ 是我們想要建立的主張</div>
+    <div class="qopt" onclick="ans(this,false)">H₀ 可以包含 ≠ 符號</div>
+  </div>
+  <div class="quiz-q">
+    <p>2. σ 未知時，檢定 μ 應使用？</p>
+    <div class="qopt" onclick="ans(this,false)">z 分配</div>
+    <div class="qopt" onclick="ans(this,true)">t 分配，df = n − 1</div>
+    <div class="qopt" onclick="ans(this,false)">F 分配</div>
+  </div>
+  <div class="quiz-q">
+    <p>3. 雙尾檢定，z = 2.1，p-value 為何？</p>
+    <div class="qopt" onclick="ans(this,false)">P(Z ≥ 2.1)</div>
+    <div class="qopt" onclick="ans(this,true)">2 × P(Z ≥ 2.1)</div>
+    <div class="qopt" onclick="ans(this,false)">P(Z ≤ 2.1)</div>
+  </div>
+  <div class="quiz-q">
+    <p>4. p-value = 0.032，α = 0.05，結論為何？</p>
+    <div class="qopt" onclick="ans(this,true)">拒絕 H₀，支持 Hₐ</div>
+    <div class="qopt" onclick="ans(this,false)">不拒絕 H₀</div>
+    <div class="qopt" onclick="ans(this,false)">接受 H₀</div>
+  </div>
+  <div class="quiz-q">
+    <p>5. 比例檢定的標準誤（SE）公式中，應使用哪個比例值？</p>
+    <div class="qopt" onclick="ans(this,false)">樣本比例 p̄</div>
+    <div class="qopt" onclick="ans(this,true)">假設比例 p₀</div>
+    <div class="qopt" onclick="ans(this,false)">兩者平均</div>
   </div>
 </section>
 
 </main>
-<footer>統計學第9章 假設檢定 完整互動式學習筆記（9.1 ～ 9.6）</footer>
 
 <script>
-// ── Math helpers ──────────────────────────────────────────────
-function npdf(x){return Math.exp(-.5*x*x)/Math.sqrt(2*Math.PI);}
-function ncdf(z){
-  const a=[.254829592,-.284496736,1.421413741,-1.453152027,1.061405429],p=.3275911;
-  const s=z<0?-1:1; z=Math.abs(z);
-  const t=1/(1+p*z);
-  const y=1-((((a[4]*t+a[3])*t+a[2])*t+a[1])*t+a[0])*t*Math.exp(-z*z);
-  return .5*(1+s*y);
+// ======= NORMAL PDF/CDF =======
+function npdf(x){return Math.exp(-x*x/2)/Math.sqrt(2*Math.PI)}
+function ncdf(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const s=x<0?-1:1,ax=Math.abs(x),t=1/(1+p*ax);
+  const y=1-(((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t)*Math.exp(-ax*ax/2);
+  return 0.5*(1+s*(2*y-1));
 }
-function invN(p){
-  if(p<=0)return -9;if(p>=1)return 9;
-  const c=[0,-3.969683028665376e1,2.209460984245205e2,-2.759285104469687e2,1.383577518672690e2,-3.066479806614716e1,2.506628277459239];
-  const b=[0,-5.447609879822406e1,1.615858368580409e2,-1.556989798598866e2,6.680131188771972e1,-1.328068155288572e1];
-  const cc=[0,-7.784894002430293e-3,-.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
-  const d=[0,7.784695709041462e-3,.3224671290700398,2.445134137142996,3.754408661907416];
-  const pL=.02425,pH=1-pL; let q;
-  if(p<pL){q=Math.sqrt(-2*Math.log(p));return(((((cc[1]*q+cc[2])*q+cc[3])*q+cc[4])*q+cc[5])*q+cc[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);}
-  if(p<=pH){q=p-.5;const r=q*q;return(((((c[1]*r+c[2])*r+c[3])*r+c[4])*r+c[5])*r+c[6])*q/((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+1);}
-  q=Math.sqrt(-2*Math.log(1-p));return-(((((cc[1]*q+cc[2])*q+cc[3])*q+cc[4])*q+cc[5])*q+cc[6])/((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1);
+function zpval(z,tail){
+  if(tail==='right') return 1-ncdf(z);
+  if(tail==='left') return ncdf(z);
+  return 2*Math.min(ncdf(z),1-ncdf(z));
 }
-function zpval(z,tail){if(tail==='left')return ncdf(z);if(tail==='right')return 1-ncdf(z);return 2*(1-ncdf(Math.abs(z)));}
 function tpval(t,df,tail){
-  if(typeof jStat!=='undefined'){const c=jStat.studentt.cdf(t,df);if(tail==='left')return c;if(tail==='right')return 1-c;return 2*Math.min(c,1-c);}
-  return zpval(t,tail);
+  if(tail==='right') return 1-jStat.studentt.cdf(t,df);
+  if(tail==='left') return jStat.studentt.cdf(t,df);
+  return 2*Math.min(jStat.studentt.cdf(t,df),1-jStat.studentt.cdf(t,df));
 }
-function tcrit(a,df,tail){
-  if(typeof jStat!=='undefined')return jStat.studentt.inv(tail==='two'?1-a/2:1-a,df);
-  return invN(tail==='two'?1-a/2:1-a);
+
+// ======= CHARTS =======
+let charts={};
+function mkChart(id,stat,df,tail,type){
+  const pts=200,xMax=4;
+  const xs=Array.from({length:pts},(_,i)=>-xMax+i*2*xMax/(pts-1));
+  let ys,shadeFn;
+  if(type==='z'){
+    ys=xs.map(x=>npdf(x));
+    shadeFn=x=>{
+      if(tail==='right') return x>=stat?'rgba(239,68,68,.5)':'rgba(59,130,246,.12)';
+      if(tail==='left') return x<=stat?'rgba(239,68,68,.5)':'rgba(59,130,246,.12)';
+      return Math.abs(x)>=Math.abs(stat)?'rgba(239,68,68,.5)':'rgba(59,130,246,.12)';
+    };
+  } else {
+    ys=xs.map(x=>{try{return jStat.studentt.pdf(x,df)}catch(e){return 0}});
+    shadeFn=x=>{
+      if(tail==='right') return x>=stat?'rgba(168,85,247,.5)':'rgba(168,85,247,.1)';
+      if(tail==='left') return x<=stat?'rgba(168,85,247,.5)':'rgba(168,85,247,.1)';
+      return Math.abs(x)>=Math.abs(stat)?'rgba(168,85,247,.5)':'rgba(168,85,247,.1)';
+    };
+  }
+  const bc=type==='z'?'#3b82f6':'#a855f7';
+  const ctx=document.getElementById(id).getContext('2d');
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(ctx,{type:'line',data:{labels:xs.map(x=>x.toFixed(2)),datasets:[{data:ys,borderColor:bc,borderWidth:1.5,fill:true,backgroundColor:xs.map(shadeFn),pointRadius:0,tension:.3}]},options:{animation:{duration:300},plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
 }
-// ── Chart builders ────────────────────────────────────────────
-function buildXY(mn=-4.5,mx=4.5,N=350){const xs=[],ys=[];for(let i=0;i<=N;i++){const x=mn+(mx-mn)*i/N;xs.push(x);ys.push(npdf(x));}return{xs,ys};}
-function buildTXY(df,mn=-5,mx=5,N=350){
-  const xs=[],ys=[];
-  const pdf=x=>typeof jStat!=='undefined'?jStat.studentt.pdf(x,df):npdf(x);
-  for(let i=0;i<=N;i++){const x=mn+(mx-mn)*i/N;xs.push(x);ys.push(pdf(x));}
-  return{xs,ys};
-}
-function mkChart(canvasId,zVal,tail,prev,col,dist='z',df=30){
-  const ctx=document.getElementById(canvasId);if(!ctx)return null;
-  const{xs,ys}=dist==='t'?buildTXY(df):buildXY();
-  const az=Math.abs(zVal);
-  const rej=xs.map((x,i)=>{
-    if(tail==='right'&&x>=zVal)return ys[i];
-    if(tail==='left'&&x<=zVal)return ys[i];
-    if(tail==='two'&&(x<=-az||x>=az))return ys[i];
-    return null;
-  });
-  if(prev)prev.destroy();
-  return new Chart(ctx,{type:'line',data:{
-    labels:xs.map(x=>x.toFixed(2)),
-    datasets:[
-      {label:dist==='t'?'t 分配':'標準常態',data:ys,borderColor:'#1a6eb5',borderWidth:2,pointRadius:0,fill:false,tension:.4},
-      {label:'p 值區域',data:rej,borderColor:col,backgroundColor:col+'44',borderWidth:0,pointRadius:0,fill:true,tension:.4}
-    ]
-  },options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},
-    scales:{x:{ticks:{maxTicksLimit:9,font:{size:10}},title:{display:true,text:dist==='t'?'t 值':'z 值'}},y:{display:false}}
-  }});
-}
-// ── Error rate chart ──────────────────────────────────────────
-let errCh=null;
-function updateAlphaChart(v){
-  const a=v/100;document.getElementById('alphaVal').textContent=a.toFixed(2);
-  const b=Math.max(.01,.5-a*1.4);
-  const ctx=document.getElementById('errChart');if(!ctx)return;
-  if(errCh)errCh.destroy();
-  errCh=new Chart(ctx,{type:'bar',data:{
-    labels:['型一錯誤 α','型二錯誤 β','檢定力 (1−β)'],
-    datasets:[{data:[a,b,1-b],backgroundColor:['#e74c3c99','#e67e2299','#27ae6099'],borderColor:['#e74c3c','#e67e22','#27ae60'],borderWidth:2,borderRadius:8}]
-  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-    scales:{y:{min:0,max:1,ticks:{callback:v=>(v*100).toFixed(0)+'%'},grid:{color:'#eee'}},x:{grid:{display:false}}}
-  }});
-}
-updateAlphaChart(5);
-// ── Z Calculator ──────────────────────────────────────────────
-let zCh=null;
+
+// ======= CALC Z =======
 function calcZ(){
-  const xb=+document.getElementById('z-xbar').value,mu=+document.getElementById('z-mu0').value;
-  const sg=+document.getElementById('z-sigma').value,n=+document.getElementById('z-n').value;
-  const a=+document.getElementById('z-alpha').value,tail=document.getElementById('z-tail').value;
-  if([xb,mu,sg,n,a].some(isNaN)||sg<=0||n<1){alert('請輸入有效數值');return;}
-  const se=sg/Math.sqrt(n),z=(xb-mu)/se,pv=zpval(z,tail),rej=pv<a;
-  document.getElementById('z-rg').innerHTML=`
-    <div class="ritem"><div class="rl">SE = σ/√n</div><div class="rv">${se.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">z 統計量</div><div class="rv" style="color:${rej?'var(--accent)':'var(--primary)'};">${z.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--accent)':'var(--green)'};">${pv.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">α</div><div class="rv">${a}</div></div>`;
-  const dc=document.getElementById('z-dec');
-  dc.className='dbox '+(rej?'reject':'noreject');
-  dc.innerHTML=rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`;
-  document.getElementById('z-res').classList.add('show');
-  const col=tail==='right'?'#e67e22':tail==='left'?'#e74c3c':'#1a6eb5';
-  zCh=mkChart('z-chart',z,tail,zCh,col);
+  const xb=+document.getElementById('z_xbar').value,
+        m0=+document.getElementById('z_mu0').value,
+        sg=+document.getElementById('z_sigma').value,
+        n=+document.getElementById('z_n').value,
+        al=+document.getElementById('z_alpha').value,
+        tail=document.getElementById('z_tail').value;
+  const z=(xb-m0)/(sg/Math.sqrt(n)),pv=zpval(z,tail);
+  const rej=pv<al;
+  const r=document.getElementById('zResult');
+  r.className='result show';
+  r.innerHTML=`<strong>z 統計量 = ${z.toFixed(4)}</strong><br>p-value = ${pv.toFixed(4)}，α = ${al}<br>${rej?'<span class="rej">拒絕 H₀ — 有足夠統計證據支持 Hₐ</span>':'<span class="norej">不拒絕 H₀ — 統計證據不足</span>'}`;
+  mkChart('zChart',z,0,tail,'z');
 }
-// ── T Calculator ──────────────────────────────────────────────
-let tCh=null;
+
+// ======= CALC T =======
 function calcT(){
-  const xb=+document.getElementById('t-xbar').value,mu=+document.getElementById('t-mu0').value;
-  const s=+document.getElementById('t-s').value,n=+document.getElementById('t-n').value;
-  const a=+document.getElementById('t-alpha').value,tail=document.getElementById('t-tail').value;
-  if([xb,mu,s,n,a].some(isNaN)||s<=0||n<2){alert('請輸入有效數值（n≥2）');return;}
-  const df=n-1,se=s/Math.sqrt(n),t=(xb-mu)/se,pv=tpval(t,df,tail),rej=pv<a;
-  document.getElementById('t-rg').innerHTML=`
-    <div class="ritem"><div class="rl">df = n−1</div><div class="rv">${df}</div></div>
-    <div class="ritem"><div class="rl">SE = s/√n</div><div class="rv">${se.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">t 統計量</div><div class="rv" style="color:${rej?'var(--accent)':'var(--primary)'};">${t.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--accent)':'var(--green)'};">${pv.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">α</div><div class="rv">${a}</div></div>`;
-  const dc=document.getElementById('t-dec');
-  dc.className='dbox '+(rej?'reject':'noreject');
-  dc.innerHTML=rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`;
-  document.getElementById('t-res').classList.add('show');
-  const col=tail==='right'?'#e67e22':tail==='left'?'#e74c3c':'#1a6eb5';
-  tCh=mkChart('t-chart',t,tail,tCh,col,'t',df);
+  const xb=+document.getElementById('t_xbar').value,
+        m0=+document.getElementById('t_mu0').value,
+        s=+document.getElementById('t_s').value,
+        n=+document.getElementById('t_n').value,
+        al=+document.getElementById('t_alpha').value,
+        tail=document.getElementById('t_tail').value;
+  const df=n-1,tv=(xb-m0)/(s/Math.sqrt(n)),pv=tpval(tv,df,tail);
+  const rej=pv<al;
+  const r=document.getElementById('tResult');
+  r.className='result show';
+  r.innerHTML=`<strong>t 統計量 = ${tv.toFixed(4)}（df = ${df}）</strong><br>p-value = ${pv.toFixed(4)}，α = ${al}<br>${rej?'<span class="rej">拒絕 H₀ — 有足夠統計證據支持 Hₐ</span>':'<span class="norej">不拒絕 H₀ — 統計證據不足</span>'}`;
+  mkChart('tChart',tv,df,tail,'t');
 }
-// ── Proportion Calculator ─────────────────────────────────────
-let pCh=null;
-function calcProp(){
-  const x=+document.getElementById('p-x').value,n=+document.getElementById('p-n').value;
-  const p0=+document.getElementById('p-p0').value,a=+document.getElementById('p-alpha').value;
-  const tail=document.getElementById('p-tail').value;
-  if([x,n,p0,a].some(isNaN)||n<1||x<0||x>n||p0<=0||p0>=1){alert('請輸入有效數值');return;}
-  const ph=x/n,se=Math.sqrt(p0*(1-p0)/n),z=(ph-p0)/se,pv=zpval(z,tail),rej=pv<a;
-  const warn=(n*p0<=5||n*(1-p0)<=5)?'<br><small style="color:orange;">⚠ 常態近似條件可能不滿足</small>':'';
-  document.getElementById('p-rg').innerHTML=`
-    <div class="ritem"><div class="rl">p̂ = x/n</div><div class="rv">${ph.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">SE</div><div class="rv">${se.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">z 統計量</div><div class="rv" style="color:${rej?'var(--accent)':'var(--primary)'};">${z.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">p 值</div><div class="rv" style="color:${rej?'var(--accent)':'var(--green)'};">${pv.toFixed(4)}</div></div>
-    <div class="ritem"><div class="rl">α</div><div class="rv">${a}</div></div>`;
-  const dc=document.getElementById('p-dec');
-  dc.className='dbox '+(rej?'reject':'noreject');
-  dc.innerHTML=(rej?`✗ p值(${pv.toFixed(4)}) &lt; α(${a}) → <strong>拒絕 H₀</strong>`:`✓ p值(${pv.toFixed(4)}) ≥ α(${a}) → <strong>不拒絕 H₀</strong>`)+warn;
-  document.getElementById('p-res').classList.add('show');
-  const col=tail==='right'?'#e67e22':tail==='left'?'#e74c3c':'#8e44ad';
-  pCh=mkChart('p-chart',z,tail,pCh,col);
+
+// ======= CALC P =======
+function calcP(){
+  const x=+document.getElementById('p_x').value,
+        n=+document.getElementById('p_n').value,
+        p0=+document.getElementById('p_p0').value,
+        al=+document.getElementById('p_alpha').value,
+        tail=document.getElementById('p_tail').value;
+  const pb=x/n,se=Math.sqrt(p0*(1-p0)/n),z=(pb-p0)/se,pv=zpval(z,tail);
+  const rej=pv<al;
+  const r=document.getElementById('pResult');
+  r.className='result show';
+  r.innerHTML=`<strong>p̄ = ${pb.toFixed(4)}，SE = ${se.toFixed(4)}</strong><br><strong>z 統計量 = ${z.toFixed(4)}</strong><br>p-value = ${pv.toFixed(4)}，α = ${al}<br>${rej?'<span class="rej">拒絕 H₀ — 有足夠統計證據支持 Hₐ</span>':'<span class="norej">不拒絕 H₀ — 統計證據不足</span>'}`;
+  mkChart('pChart',z,0,tail,'z');
 }
-// ── Critical Value Chart ──────────────────────────────────────
-let cvCh=null;
-function updateCV(){
-  const a=parseInt(document.getElementById('cv-alpha').value)/100;
-  document.getElementById('cv-aval').textContent=a.toFixed(2);
-  const tail=document.getElementById('cv-tail').value;
-  const dist=document.getElementById('cv-dist').value;
-  const df=parseInt(document.getElementById('cv-df').value)||30;
-  document.getElementById('cv-dfwrap').style.display=dist==='t'?'block':'none';
-  const cv=dist==='t'?tcrit(a,df,tail):invN(tail==='two'?1-a/2:1-a);
-  const{xs,ys}=dist==='t'?buildTXY(df):buildXY();
-  const rej=xs.map((x,i)=>{
-    if(tail==='right'&&x>=cv)return ys[i];
-    if(tail==='left'&&x<=-cv)return ys[i];
-    if(tail==='two'&&(x<=-cv||x>=cv))return ys[i];
-    return null;
-  });
-  const ctx=document.getElementById('cv-chart');if(!ctx)return;
-  if(cvCh)cvCh.destroy();
-  cvCh=new Chart(ctx,{type:'line',data:{
-    labels:xs.map(x=>x.toFixed(2)),
-    datasets:[
-      {label:dist==='t'?'t 分配':'Z 分配',data:ys,borderColor:'#1a6eb5',borderWidth:2,pointRadius:0,fill:false,tension:.4},
-      {label:'拒絕區域',data:rej,borderColor:'#e74c3c',backgroundColor:'#e74c3c44',borderWidth:0,pointRadius:0,fill:true,tension:.4}
-    ]
-  },options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:true,position:'top',labels:{font:{size:11}}}},
-    scales:{x:{ticks:{maxTicksLimit:9,font:{size:10}},title:{display:true,text:dist==='t'?'t 值':'z 值'}},y:{display:false}}
-  }});
-  const cvStr=tail==='two'?`±${cv.toFixed(3)}`:tail==='right'?`${cv.toFixed(3)}`:`−${cv.toFixed(3)}`;
-  const ruleStr=tail==='right'?`統計量 > ${cv.toFixed(3)}`:tail==='left'?`統計量 < −${cv.toFixed(3)}`:`|統計量| > ${cv.toFixed(3)}`;
-  document.getElementById('cv-info').innerHTML=`<strong>臨界值：${cvStr}</strong>　分配：${dist==='t'?`t(df=${df})`:'Z'}　α = ${a.toFixed(2)}<br>拒絕規則：${ruleStr}`;
+
+// ======= TABS =======
+function swTab(id,grp){
+  const parent=document.getElementById(id).closest('.card');
+  parent.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
+  parent.querySelectorAll('.tb').forEach(t=>t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  const tbs=parent.querySelectorAll('.tb'),tcs=parent.querySelectorAll('.tc');
+  tcs.forEach((c,i)=>{if(c.id===id)tbs[i].classList.add('on')});
 }
-document.getElementById('cv-dist').addEventListener('change',updateCV);
-updateCV();
-// ── Summary p-value chart ─────────────────────────────────────
-(function(){
-  const ctx=document.getElementById('sum-chart');if(!ctx)return;
-  const labels=['例9.6\n雙尾z','例9.7\nCI法','退休年齡\n右尾z','例9.8\n左尾t','例9.9\n雙尾t','例9.10\n左尾z','例9.11\n雙尾z','案例μ\n左尾t','案例p\n右尾z'];
-  const pvals=[0.1657,0.1657,0.0131,0.0000,0.0600,0.2234,0.0711,0.204,0.369];
-  const alpha=[.05,.05,.05,.05,.05,.05,.10,.05,.05];
-  const colors=pvals.map((p,i)=>p<alpha[i]?'#e74c3c99':'#27ae6099');
-  const border=pvals.map((p,i)=>p<alpha[i]?'#e74c3c':'#27ae60');
-  new Chart(ctx,{type:'bar',data:{
-    labels,datasets:[
-      {label:'p 值',data:pvals,backgroundColor:colors,borderColor:border,borderWidth:2,borderRadius:6},
-      {label:'α',data:alpha,type:'line',borderColor:'#1a6eb5',borderWidth:2,borderDash:[5,3],pointRadius:0,fill:false}
-    ]
-  },options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:true,position:'top'},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw.toFixed(4)}`}}},
-    scales:{y:{min:0,max:.45,ticks:{callback:v=>v.toFixed(2)},title:{display:true,text:'p 值'}},x:{ticks:{font:{size:10}}}}
-  }});
-})();
-// ── Example toggle ────────────────────────────────────────────
-function toggleEx(hdr){hdr.classList.toggle('open');hdr.nextElementSibling.classList.toggle('open');}
-// ── Quiz ──────────────────────────────────────────────────────
-function chkQ(el,qid,ok){
-  const c=document.getElementById(qid);if(c.dataset.answered)return;c.dataset.answered='1';
-  c.querySelectorAll('.qopt').forEach(o=>o.style.pointerEvents='none');
-  el.classList.add(ok?'correct':'wrong');
-  const r=document.getElementById(qid+'-r');r.textContent=ok?'✓ 正確！':'✗ 不正確，請重試。';r.style.color=ok?'#27ae60':'#e74c3c';
-  c.querySelector('.qreset').style.display='inline-block';
+
+// ======= EXAMPLE TOGGLE =======
+function tog(h){
+  const b=h.nextElementSibling;
+  b.classList.toggle('open');
+  h.classList.toggle('open');
 }
-function rstQ(qid){
-  const c=document.getElementById(qid);delete c.dataset.answered;
-  c.querySelectorAll('.qopt').forEach(o=>{o.className='qopt';o.style.pointerEvents='';});
-  document.getElementById(qid+'-r').textContent='';c.querySelector('.qreset').style.display='none';
+
+// ======= QUIZ =======
+function ans(el,ok){
+  const p=el.parentElement;
+  if(p.querySelector('.ok')||p.querySelector('.ng'))return;
+  el.classList.add(ok?'ok':'ng');
+  if(!ok)p.querySelectorAll('.qopt').forEach(o=>{if(o!==el)o.style.opacity='.4'});
 }
 </script>
 </body>
