@@ -1,1 +1,1 @@
-# statistics-notes-ch9
+# statistics-notes
