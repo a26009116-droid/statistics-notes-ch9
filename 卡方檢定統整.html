@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>第12章｜卡方檢定</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstat@1.9.6/dist/jstat.min.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--card:#1a1d2e;--card2:#1e2236;
+  --s1:#38bdf8;--s2:#f59e0b;--s3:#a78bfa;--s4:#34d399;--s5:#f87171;
+  --text:#e2e8f0;--muted:#94a3b8;--border:#2d3555;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7}
+a{color:var(--s1);text-decoration:none}
+h1{font-size:2rem;font-weight:700}
+h2{font-size:1.4rem;color:var(--s1);margin-bottom:.6rem}
+h3{font-size:1.1rem;color:var(--s2);margin:.8rem 0 .4rem}
+h4{font-size:1rem;color:var(--s4);margin:.6rem 0 .3rem}
+
+/* Header */
+header{background:linear-gradient(135deg,#1e2a4a,#0f1117);padding:2.5rem 2rem 2rem;border-bottom:2px solid var(--s1)}
+.ch-label{color:var(--s1);font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.4rem}
+header p{color:var(--muted);margin-top:.5rem;max-width:700px}
+.lo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem;margin-top:1.2rem}
+.lo-item{background:#1e2a4a;border-left:3px solid var(--s1);padding:.5rem .8rem;border-radius:4px;font-size:.85rem}
+.lo-item span{color:var(--s1);font-weight:700;margin-right:.4rem}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:100;background:#12162a;border-bottom:1px solid var(--border);padding:.6rem 1.5rem;display:flex;gap:.5rem;flex-wrap:wrap}
+nav a{padding:.35rem .8rem;border-radius:20px;font-size:.82rem;color:var(--muted);border:1px solid var(--border);transition:.2s}
+nav a:hover{background:var(--s1);color:#000;border-color:var(--s1)}
+
+/* Main */
+main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+section{margin-bottom:3rem}
+.section-title{font-size:1.5rem;color:var(--s1);border-left:4px solid var(--s1);padding-left:.8rem;margin-bottom:1.2rem}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.2rem}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1rem}
+
+/* Formula box */
+.formula-box{background:#0d1b2e;border:1px solid var(--s1);border-radius:8px;padding:1rem 1.4rem;margin:.8rem 0;text-align:center}
+.formula-box .formula{font-size:1.1rem;font-family:'Courier New',monospace;color:#c8e6ff;letter-spacing:.02em}
+.formula-box .note{font-size:.82rem;color:var(--muted);margin-top:.4rem}
+
+/* Definition box */
+.def-box{background:#1a2540;border:2px solid var(--s3);border-radius:8px;padding:1.2rem 1.4rem;margin:.8rem 0}
+.def-box .def-title{color:var(--s3);font-weight:700;text-align:center;letter-spacing:.1em;margin-bottom:.8rem;font-size:.9rem}
+
+/* Example */
+.example{border:1px solid var(--s2);border-radius:8px;overflow:hidden;margin:1rem 0}
+.example-header{background:#2a2010;padding:.7rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.example-header h4{color:var(--s2);margin:0;font-size:.95rem}
+.example-header .toggle{color:var(--s2);font-size:1.2rem;transition:transform .3s}
+.example-header.open .toggle{transform:rotate(45deg)}
+.example-body{display:none;padding:1.2rem;border-top:1px solid #3a3010}
+.example-body.open{display:block}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.88rem}
+th{background:#1e2a4a;color:var(--s1);padding:.5rem .8rem;text-align:center;border:1px solid var(--border)}
+td{padding:.45rem .8rem;text-align:center;border:1px solid var(--border)}
+tr:nth-child(even) td{background:#161929}
+.highlight-row td{background:#1e2a1e;color:var(--s4);font-weight:600}
+
+/* Hypothesis */
+.hypo{background:#0d1520;border-left:3px solid var(--s3);border-radius:4px;padding:.7rem 1rem;margin:.6rem 0;font-family:'Courier New',monospace;font-size:.92rem}
+.h0{color:#a5f3fc}
+.ha{color:#fca5a5}
+
+/* Result badge */
+.result{display:inline-block;padding:.3rem .8rem;border-radius:20px;font-size:.82rem;font-weight:600;margin-top:.5rem}
+.reject{background:#3f1515;color:#f87171;border:1px solid #f87171}
+.not-reject{background:#15311f;color:#34d399;border:1px solid #34d399}
+
+/* Calculators */
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem}
+.calc-card{background:var(--card);border:1px solid var(--s3);border-radius:10px;padding:1.4rem}
+.calc-card h3{color:var(--s3);margin-bottom:1rem}
+label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.2rem;margin-top:.7rem}
+input,select,textarea{width:100%;background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.5rem .8rem;color:var(--text);font-size:.9rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--s3)}
+textarea{min-height:80px;resize:vertical;font-family:'Courier New',monospace;font-size:.82rem}
+.calc-btn{margin-top:1rem;width:100%;padding:.7rem;background:var(--s3);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:.95rem;transition:.2s}
+.calc-btn:hover{opacity:.85}
+.calc-result{margin-top:1rem;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1rem;min-height:80px;font-size:.9rem}
+.calc-result .stat{color:var(--s4);font-weight:700;font-size:1.1rem}
+.chart-wrap{margin-top:1rem;height:180px}
+
+/* Info pills */
+.info-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
+.pill{background:#1e2236;border:1px solid var(--border);border-radius:20px;padding:.25rem .7rem;font-size:.8rem;color:var(--muted)}
+.pill span{color:var(--s1);font-weight:600}
+
+/* Summary grid */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.summary-card .sc-title{color:var(--s2);font-weight:700;margin-bottom:.5rem;font-size:.9rem}
+
+/* Quiz */
+.quiz-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.4rem}
+.quiz-q{margin-bottom:1.2rem}
+.quiz-q p{margin-bottom:.5rem;font-weight:600}
+.quiz-opts label{display:block;padding:.35rem .7rem;border-radius:6px;cursor:pointer;margin:.2rem 0;border:1px solid transparent;transition:.2s;font-size:.9rem}
+.quiz-opts label:hover{background:#1e2236}
+.quiz-opts input[type=radio]{width:auto;margin-right:.5rem}
+.quiz-btn{margin-top:1rem;padding:.6rem 1.5rem;background:var(--s4);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer}
+.quiz-feedback{margin-top:.8rem;padding:.7rem 1rem;border-radius:6px;font-size:.9rem;display:none}
+.quiz-feedback.correct{background:#15311f;color:#34d399;border:1px solid #34d399}
+.quiz-feedback.wrong{background:#3f1515;color:#f87171;border:1px solid #f87171}
+
+/* Prof notes */
+.prof-notes{background:#1a1520;border:1px solid var(--s3);border-radius:10px;padding:1.4rem}
+.prof-notes h2{color:var(--s3)}
+.prof-notes ul{list-style:none;padding:0}
+.prof-notes ul li{padding:.4rem 0;border-bottom:1px solid #2a2040;font-size:.9rem}
+.prof-notes ul li::before{content:"★ ";color:var(--s2)}
+
+p{margin-bottom:.6rem}
+ul,ol{padding-left:1.4rem;margin-bottom:.6rem}
+li{margin-bottom:.3rem;font-size:.92rem}
+strong{color:var(--s4)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ch-label">Chapter 12</div>
+  <h1>卡方檢定 Chi-Square Tests</h1>
+  <p>利用卡方分配進行適合度檢定、獨立性檢定及常態性檢定，並介紹 Jarque-Bera 檢定。</p>
+  <div class="lo-grid">
+    <div class="lo-item"><span>LO 12.1</span>多項實驗的適合度檢定</div>
+    <div class="lo-item"><span>LO 12.2</span>獨立性卡方檢定</div>
+    <div class="lo-item"><span>LO 12.3</span>常態性適合度檢定</div>
+    <div class="lo-item"><span>LO 12.4</span>Jarque-Bera 檢定</div>
+  </div>
+</header>
+
+<nav>
+  <a href="#s121">12.1 適合度檢定</a>
+  <a href="#s122">12.2 獨立性檢定</a>
+  <a href="#s123">12.3 常態性檢定</a>
+  <a href="#s124">12.4 Jarque-Bera</a>
+  <a href="#calc">計算機</a>
+  <a href="#summary">公式總整</a>
+  <a href="#notes">教授筆記</a>
+  <a href="#quiz">隨堂測驗</a>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<!-- 12.1 GOODNESS-OF-FIT TEST -->
+<!-- ============================================================ -->
+<section id="s121">
+  <div class="section-title">12.1 多項實驗的適合度檢定</div>
+
+  <div class="card">
+    <h2>多項實驗 (Multinomial Experiment)</h2>
+    <p>由 n 個獨立且相同的試驗所組成，每次試驗有 <strong>k 種可能結果</strong>（類別），第 i 類的機率 p<sub>i</sub> 固定，且 p₁ + p₂ + ⋯ + p<sub>k</sub> = 1。</p>
+    <div class="def-box">
+      <div class="def-title">適合度檢定 (Goodness-of-Fit Test)</div>
+      <p>用來檢定母體各類別的比例是否等於某組假設值。</p>
+      <ul>
+        <li><strong>H₀</strong>：p₁ = p₁₀, p₂ = p₂₀, …, p<sub>k</sub> = p<sub>k0</sub>（各比例等於假設值）</li>
+        <li><strong>Hₐ</strong>：並非所有比例都等於假設值</li>
+      </ul>
+    </div>
+    <div class="formula-box">
+      <div class="formula">χ²<sub>df</sub> = Σ (o<sub>i</sub> − e<sub>i</sub>)² / e<sub>i</sub></div>
+      <div class="note">df = k − 1 ｜ e<sub>i</sub> = n × p<sub>i</sub> ｜ 每個 e<sub>i</sub> ≥ 5 時檢定有效 ｜ 右尾檢定</div>
+    </div>
+    <div class="info-row">
+      <div class="pill">k = 類別數</div>
+      <div class="pill">o<sub>i</sub> = 觀測頻率</div>
+      <div class="pill">e<sub>i</sub> = 期望頻率 = n·p<sub>i</sub></div>
+      <div class="pill">df = k−1</div>
+      <div class="pill">右尾檢定</div>
+    </div>
+  </div>
+
+  <!-- Restaurant preliminary example -->
+  <div class="card2">
+    <h3>前導範例：餐廳評分</h3>
+    <p>某餐廳去年調查顧客評分比例：優秀15%、良好30%、普通45%、差10%。最近抽取250位顧客：優秀46、良好83、普通105、差16。α=5% 下，比例是否改變？</p>
+    <table>
+      <tr><th>類別</th><th>p<sub>i</sub> (H₀)</th><th>觀測 o<sub>i</sub></th><th>期望 e<sub>i</sub>=250×p<sub>i</sub></th><th>(o<sub>i</sub>−e<sub>i</sub>)²/e<sub>i</sub></th></tr>
+      <tr><td>優秀</td><td>0.15</td><td>46</td><td>37.5</td><td>1.9267</td></tr>
+      <tr><td>良好</td><td>0.30</td><td>83</td><td>75.0</td><td>0.8533</td></tr>
+      <tr><td>普通</td><td>0.45</td><td>105</td><td>112.5</td><td>0.5000</td></tr>
+      <tr><td>差</td><td>0.10</td><td>16</td><td>25.0</td><td>3.2400</td></tr>
+      <tr class="highlight-row"><td colspan="3"><strong>合計</strong></td><td><strong>250</strong></td><td><strong>χ²₃ = 6.520</strong></td></tr>
+    </table>
+    <p>p 值 = P(χ²₃ ≥ 6.520) = 0.089 &gt; 0.05，<span class="result not-reject">不拒絕 H₀</span> — 無法得出比例已改變的結論。</p>
+  </div>
+
+  <!-- Example 12.1 -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 12.1 — 市占率調查 (5家廠商)</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>2023年五家廠商市占率：Firm1=0.40, Firm2=0.32, Firm3=0.24, Firm4=0.02, Firm5=0.02。行銷分析師抽樣200位顧客（觀測：70, 60, 54, 10, 6），α=5% 下市占率是否改變？</p>
+      <div class="hypo">
+        <div class="h0">H₀ : p₁=0.40, p₂=0.32, p₃=0.24, p₄=0.02, p₅=0.02</div>
+        <div class="ha">Hₐ : 並非所有市占率等於假設值</div>
+      </div>
+      <p><strong>注意：</strong>廠商4和5的期望頻率 e₄=e₅=4 &lt; 5，須合併成 Firm4（合併），新 p₄=0.04, e₄=8, o₄=16。</p>
+      <table>
+        <tr><th>廠商</th><th>市占率</th><th>觀測</th><th>期望</th><th>(o−e)²/e</th></tr>
+        <tr><td>1</td><td>0.40</td><td>70</td><td>80</td><td>1.2500</td></tr>
+        <tr><td>2</td><td>0.32</td><td>60</td><td>64</td><td>0.2500</td></tr>
+        <tr><td>3</td><td>0.24</td><td>54</td><td>48</td><td>0.7500</td></tr>
+        <tr><td>4+5</td><td>0.04</td><td>16</td><td>8</td><td>8.0000</td></tr>
+        <tr class="highlight-row"><td colspan="3"><strong>合計</strong></td><td><strong>200</strong></td><td><strong>χ²₃ = 10.250</strong></td></tr>
+      </table>
+      <p>df = k−1 = 4−1 = 3，p 值 = P(χ²₃ ≥ 10.250) = 0.017 &lt; 0.05，<span class="result reject">拒絕 H₀</span></p>
+      <p>在5%顯著水準下，市場市占率自2023年起已發生改變。</p>
+    </div>
+  </div>
+
+  <!-- Example 12.2 -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 12.2 — 輔導中心 (R 語言範例)</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>大學輔導中心想知道學生在週一至週五到訪的比例是否相同。抽樣200位學生（週五52、週一36、週四44、週二36、週三32），α=5%。</p>
+      <div class="hypo">
+        <div class="h0">H₀ : p₁ = p₂ = p₃ = p₄ = p₅ = 0.20</div>
+        <div class="ha">Hₐ : 並非所有比例都等於 0.20</div>
+      </div>
+      <p>R 指令：<code>chisq.test(table(myData$Day), p=c(0.20,0.20,0.20,0.20,0.20))</code></p>
+      <div class="def-box" style="border-color:var(--s4)">
+        <div class="def-title" style="color:var(--s4)">R 輸出結果</div>
+        <p style="font-family:monospace">Chi-squared test for given probabilities<br>
+        X-squared = 6.4, df = 4, <strong>p-value = 0.1712</strong></p>
+      </div>
+      <p>p 值 = 0.1712 &gt; 0.05，<span class="result not-reject">不拒絕 H₀</span> — 無法得出到訪比例在各天有所不同。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12.2 TEST FOR INDEPENDENCE -->
+<!-- ============================================================ -->
+<section id="s122">
+  <div class="section-title">12.2 獨立性卡方檢定</div>
+
+  <div class="card">
+    <h2>列聯表的獨立性檢定 (Test for Independence)</h2>
+    <p>用來評估兩個類別變數是否有關聯。列聯表有 r 列、c 行。</p>
+    <div class="hypo">
+      <div class="h0">H₀ : 兩個類別變數相互獨立</div>
+      <div class="ha">Hₐ : 兩個類別變數相依（有關聯）</div>
+    </div>
+    <div class="def-box">
+      <div class="def-title">期望頻率計算</div>
+      <div class="formula-box" style="margin:.4rem 0">
+        <div class="formula">e<sub>ij</sub> = (第 i 列合計 × 第 j 行合計) / 總樣本數</div>
+      </div>
+    </div>
+    <div class="formula-box">
+      <div class="formula">χ²<sub>df</sub> = ΣΣ (o<sub>ij</sub> − e<sub>ij</sub>)² / e<sub>ij</sub></div>
+      <div class="note">df = (r−1)(c−1) ｜ 每個 e<sub>ij</sub> ≥ 5 時檢定有效 ｜ 右尾檢定</div>
+    </div>
+  </div>
+
+  <!-- Introductory case: Fitness center -->
+  <div class="card2">
+    <h3>導入案例：健身中心入會決策 (Janet Mwangi)</h3>
+    <p>從400位過去開放日參加者中，分析年齡組別與入會結果是否有關聯（α=5%）。</p>
+    <div class="hypo">
+      <div class="h0">H₀ : 年齡組別與入會結果相互獨立</div>
+      <div class="ha">Hₐ : 年齡組別與入會結果相依</div>
+    </div>
+    <table>
+      <tr><th>入會結果</th><th>未滿30歲 (U)</th><th>30~50歲 (B)</th><th>超過50歲 (O)</th><th>列合計</th></tr>
+      <tr><td>入會 (E)</td><td>24</td><td>72</td><td>44</td><td>140</td></tr>
+      <tr><td>未入會 (N)</td><td>84</td><td>88</td><td>88</td><td>260</td></tr>
+      <tr><td><strong>行合計</strong></td><td>108</td><td>160</td><td>132</td><td>400</td></tr>
+    </table>
+    <h4>期望頻率計算</h4>
+    <table>
+      <tr><th>入會結果</th><th>U</th><th>B</th><th>O</th></tr>
+      <tr><td>入會 (E)</td><td>(140×108)/400 = 37.80</td><td>(140×160)/400 = 56.00</td><td>(140×132)/400 = 46.20</td></tr>
+      <tr><td>未入會 (N)</td><td>(260×108)/400 = 70.20</td><td>(260×160)/400 = 104.00</td><td>(260×132)/400 = 85.80</td></tr>
+    </table>
+    <p>df = (2−1)(3−1) = 2</p>
+    <p>χ²₂ = (24−37.80)²/37.80 + (72−56.00)²/56.00 + (44−46.20)²/46.20 + (84−70.20)²/70.20 + (88−104.00)²/104.00 + (88−85.80)²/85.80</p>
+    <p>= 5.0349 + 4.5714 + 0.1048 + 2.7149 + 2.4615 + 0.0565 = <strong>14.945</strong></p>
+    <p>p 值 = P(χ²₂ ≥ 14.945) = 0.001 &lt; 0.05，<span class="result reject">拒絕 H₀</span></p>
+    <p>在5%顯著水準下，年齡組別與入會結果有顯著關聯。45%的30~50歲組入會，22%的未滿30歲組入會，33%的超過50歲組入會。</p>
+  </div>
+
+  <!-- Example 12.3 -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 12.3 — 社群媒體偏好 vs 族裔</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>Aarti Vardan 調查校園400位學生，分析族裔（拉丁裔/白人）與社群媒體偏好（Instagram/Pinterest）是否有關聯，α=10%。</p>
+      <table>
+        <tr><th>族裔</th><th>Instagram</th><th>Pinterest</th><th>列合計</th></tr>
+        <tr><td>拉丁裔 (Latinx)</td><td>50</td><td>60</td><td>110</td></tr>
+        <tr><td>白人 (White Americans)</td><td>120</td><td>170</td><td>290</td></tr>
+        <tr><td><strong>行合計</strong></td><td>170</td><td>230</td><td>400</td></tr>
+      </table>
+      <div class="hypo">
+        <div class="h0">H₀ : 族裔與社群媒體偏好相互獨立</div>
+        <div class="ha">Hₐ : 族裔與社群媒體偏好相依</div>
+      </div>
+      <h4>期望頻率</h4>
+      <p>e₁₁=(110×170)/400=46.75, e₁₂=(110×230)/400=63.25</p>
+      <p>e₂₁=(290×170)/400=123.25, e₂₂=(290×230)/400=166.75</p>
+      <p>df = (2−1)(2−1) = 1</p>
+      <p>χ²₁ = (50−46.75)²/46.75 + (60−63.25)²/63.25 + (120−123.25)²/123.25 + (170−166.75)²/166.75</p>
+      <p>= 0.2259 + 0.1670 + 0.0857 + 0.0633 = <strong>0.542</strong></p>
+      <p>p 值 = P(χ²₁ ≥ 0.542) = 0.462 &gt; 0.10，<span class="result not-reject">不拒絕 H₀</span></p>
+      <p>在10%顯著水準下，樣本資料不支持族裔對社群媒體偏好有顯著影響。</p>
+    </div>
+  </div>
+
+  <!-- Example 12.4 -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 12.4 — 工廠班別與瑕疵品 (R 語言)</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>Metalworks 分析300個零件，探討生產班別（1/2/3班）與是否有瑕疵（Yes/No）是否相依，α=5%。</p>
+      <div class="hypo">
+        <div class="h0">H₀ : Shift 與 Defective 相互獨立</div>
+        <div class="ha">Hₐ : Shift 與 Defective 相依</div>
+      </div>
+      <table>
+        <tr><th>班別</th><th>No (無瑕疵)</th><th>Yes (有瑕疵)</th></tr>
+        <tr><td>第1班</td><td>95</td><td>5</td></tr>
+        <tr><td>第2班</td><td>94</td><td>6</td></tr>
+        <tr><td>第3班</td><td>87</td><td>13</td></tr>
+      </table>
+      <p>R 指令：<code>chisq.test(myData$Shift, myData$Defective, correct = FALSE)</code></p>
+      <div class="def-box" style="border-color:var(--s4)">
+        <div class="def-title" style="color:var(--s4)">R 輸出結果</div>
+        <p style="font-family:monospace">Pearson's Chi-squared test<br>
+        X-squared = 5.163, df = 2, <strong>p-value = 0.07566</strong></p>
+      </div>
+      <p>p 值 = 0.07566 &gt; 0.05，<span class="result not-reject">不拒絕 H₀</span> — 無法得出班別與瑕疵品相依的結論。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12.3 NORMALITY TEST -->
+<!-- ============================================================ -->
+<section id="s123">
+  <div class="section-title">12.3 常態性適合度檢定</div>
+
+  <div class="card">
+    <h2>卡方常態性檢定 (Chi-Square Test for Normality)</h2>
+    <p>將數值型變數轉換為頻率分配（分成 k 個不重疊區間），然後計算在常態分配下各區間的期望頻率，再執行適合度檢定。</p>
+    <ul>
+      <li>需估計 2 個母數（μ 和 σ）→ 自由度減少 2</li>
+      <li><strong>df = k − 3</strong>（k 個區間，估計 2 個母數）</li>
+    </ul>
+    <div class="formula-box">
+      <div class="formula">χ²<sub>df</sub> = Σ (o<sub>i</sub> − e<sub>i</sub>)² / e<sub>i</sub> ，df = k − 3</div>
+      <div class="note">e<sub>i</sub> = n × p<sub>i</sub> ，p<sub>i</sub> 由常態分配計算 ｜ 每個 e<sub>i</sub> ≥ 5 ｜ 右尾檢定</div>
+    </div>
+    <div class="hypo">
+      <div class="h0">H₀ : 資料來自均值 μ̂、標準差 σ̂ 的常態分配</div>
+      <div class="ha">Hₐ : 資料不服從指定常態分配</div>
+    </div>
+  </div>
+
+  <!-- Income example -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 — 家戶所得常態性檢定 (Income)</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>一位經濟學家主張某中西部城市家戶年所得（千美元）不服從常態分配。以50筆資料（x̄=63.80, s=45.78）在5%顯著水準下進行檢定。</p>
+      <div class="hypo">
+        <div class="h0">H₀ : 所得服從 N(63.80, 45.78²)</div>
+        <div class="ha">Hₐ : 所得不服從 N(63.80, 45.78²)</div>
+      </div>
+      <p>分成 k=5 個區間，在 H₀ 下計算各區間機率，e<sub>i</sub> = 50 × p<sub>i</sub>：</p>
+      <table>
+        <tr><th>所得區間 (千$)</th><th>觀測 o<sub>i</sub></th><th>p<sub>i</sub> (常態)</th><th>期望 e<sub>i</sub></th><th>(o<sub>i</sub>−e<sub>i</sub>)²/e<sub>i</sub></th></tr>
+        <tr><td>&lt; 20</td><td>6</td><td>0.1693</td><td>8.467</td><td>0.7190</td></tr>
+        <tr><td>20 ≤ 所得 &lt; 40</td><td>10</td><td>0.1322</td><td>6.611</td><td>1.7368</td></tr>
+        <tr><td>40 ≤ 所得 &lt; 60</td><td>13</td><td>0.1653</td><td>8.268</td><td>2.7091</td></tr>
+        <tr><td>60 ≤ 所得 &lt; 80</td><td>10</td><td>0.1714</td><td>8.578</td><td>0.2394</td></tr>
+        <tr><td>≥ 80</td><td>11</td><td>0.3617</td><td>18.086</td><td>2.7762</td></tr>
+        <tr class="highlight-row"><td colspan="3"><strong>合計 (n=50)</strong></td><td><strong>50</strong></td><td><strong>χ²₂ = 8.180</strong></td></tr>
+      </table>
+      <p>df = k−3 = 5−3 = 2</p>
+      <p>機率計算範例：P(X &lt; 20) = P(Z &lt; (20−63.80)/45.78) = P(Z &lt; −0.9567) = 0.1693</p>
+      <p>p 值 = P(χ²₂ ≥ 8.180) = 0.017 &lt; 0.05，<span class="result reject">拒絕 H₀</span></p>
+      <p>在5%顯著水準下，該城市家戶所得不服從均值63.80、標準差45.78的常態分配。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 12.4 JARQUE-BERA TEST -->
+<!-- ============================================================ -->
+<section id="s124">
+  <div class="section-title">12.4 Jarque-Bera 常態性檢定</div>
+
+  <div class="card">
+    <h2>Jarque-Bera 檢定</h2>
+    <p>常態性適合度檢定的替代方案，不需要將資料分組為區間，直接利用樣本的<strong>偏態係數 S</strong> 和<strong>（超額）峰態係數 K</strong> 進行檢定。</p>
+    <ul>
+      <li><strong>偏態係數 S = 0</strong>：資料對稱於均值</li>
+      <li><strong>超額峰態係數 K = 0</strong>：分配與常態分配同高度（常態分配 S=K=0）</li>
+    </ul>
+    <div class="hypo">
+      <div class="h0">H₀ : S = 0 且 K = 0（資料來自常態分配）</div>
+      <div class="ha">Hₐ : S ≠ 0 或 K ≠ 0</div>
+    </div>
+    <div class="formula-box">
+      <div class="formula">χ²₂ = (n/6) [S² + K²/4]</div>
+      <div class="note">df = 2 ｜ S = 偏態係數 ｜ K = 超額峰態係數 ｜ 右尾檢定</div>
+    </div>
+    <p>Excel 函數：SKEW（偏態）、KURT（超額峰態）；p 值：=CHISQ.DIST.RT(χ², 2)</p>
+  </div>
+
+  <!-- Example 12.5 -->
+  <div class="example">
+    <div class="example-header" onclick="toggleExample(this)">
+      <h4>範例 12.5 — JB 檢定家戶所得 (Income)</h4>
+      <span class="toggle">+</span>
+    </div>
+    <div class="example-body">
+      <p>以1%顯著水準，對同一批所得資料（n=50）進行 Jarque-Bera 常態性檢定。</p>
+      <div class="hypo">
+        <div class="h0">H₀ : S = 0 且 K = 0</div>
+        <div class="ha">Hₐ : S ≠ 0 或 K ≠ 0</div>
+      </div>
+      <p>由 Excel SKEW/KURT 函數計算得：<strong>S = 2.3190</strong>，<strong>K = 6.7322</strong></p>
+      <p>χ²₂ = (50/6) [2.3190² + 6.7322²/4] = (8.333) [5.3778 + 11.3289] = (8.333)(16.7067) = <strong>139.237</strong></p>
+      <p>p 值 = P(χ²₂ ≥ 139.237) ≈ 0.000 &lt; 0.01，<span class="result reject">拒絕 H₀</span></p>
+      <p>在1%顯著水準下，所得不服從常態分配——所得資料明顯右偏（S=2.319&gt;0），與常態性適合度檢定結論一致。</p>
+    </div>
+  </div>
+
+  <!-- Case Study: S&P 500 -->
+  <div class="card">
+    <h2>案例研究：S&amp;P 500 月報酬率</h2>
+    <p>Javier Gonzalez 分析2012~2019年S&amp;P 500指數的月報酬率（n=96），想確認報酬率是否服從常態分配，以做出適當投資推論。</p>
+    <table>
+      <tr><th>統計量</th><th>均值</th><th>中位數</th><th>標準差</th><th>偏態 S</th><th>峰態 K</th></tr>
+      <tr><td><strong>值</strong></td><td>1.0376%</td><td>1.6250%</td><td>3.1736%</td><td>−0.6525</td><td>1.0434</td></tr>
+    </table>
+    <p>均值 (1.04%) &lt; 中位數 (1.63%)，說明分配左偏（負偏態），符合 S = −0.6525 &lt; 0 的觀察。</p>
+    <div class="card2">
+      <h3>常態性適合度檢定 (GOF Test)</h3>
+      <p>分成 k=5 個區間，由 N(1.0376, 3.1736²) 計算期望頻率：</p>
+      <table>
+        <tr><th>報酬率區間 (%)</th><th>觀測 o<sub>i</sub></th><th>p<sub>i</sub></th><th>期望 e<sub>i</sub></th><th>(o−e)²/e</th></tr>
+        <tr><td>報酬 &lt; −2</td><td>13</td><td>0.1692</td><td>16.2479</td><td>0.6492</td></tr>
+        <tr><td>−2 ≤ 報酬 &lt; 0</td><td>14</td><td>0.2026</td><td>19.4502</td><td>1.5272</td></tr>
+        <tr><td>0 ≤ 報酬 &lt; 2</td><td>32</td><td>0.2473</td><td>23.7403</td><td>2.8737</td></tr>
+        <tr><td>2 ≤ 報酬 &lt; 4</td><td>25</td><td>0.2056</td><td>19.7332</td><td>1.4057</td></tr>
+        <tr><td>報酬 ≥ 4</td><td>12</td><td>0.1753</td><td>16.8284</td><td>1.3854</td></tr>
+        <tr class="highlight-row"><td colspan="3"><strong>合計 (n=96)</strong></td><td><strong>96</strong></td><td><strong>χ²₂ = 7.8412</strong></td></tr>
+      </table>
+      <p>df = 5−3 = 2，p 值 = P(χ²₂ ≥ 7.8412) = 0.0198 &lt; 0.05，<span class="result reject">拒絕 H₀</span></p>
+    </div>
+    <div class="card2">
+      <h3>Jarque-Bera 檢定</h3>
+      <p>n=96, S=−0.6525, K=1.0434</p>
+      <p>χ²₂ = (96/6)[(−0.6525)² + (1.0434)²/4] = 16 × [0.4258 + 0.2722] = 16 × 0.6980 = <strong>11.1665</strong></p>
+      <p>p 值 = P(χ²₂ ≥ 11.1665) = 0.0038 &lt; 0.05，<span class="result reject">拒絕 H₀</span></p>
+      <p>兩種檢定皆在5%顯著水準下拒絕常態性，S&amp;P 500月報酬率不服從常態分配。</p>
+    </div>
+
+    <div class="def-box">
+      <div class="def-title">結論總結</div>
+      <table>
+        <tr><th>檢定方法</th><th>χ² 統計量</th><th>p 值</th><th>結論 (α=5%)</th></tr>
+        <tr><td>常態性適合度檢定</td><td>7.8412</td><td>0.0198</td><td>拒絕 H₀</td></tr>
+        <tr><td>Jarque-Bera 檢定</td><td>11.1665</td><td>0.0038</td><td>拒絕 H₀</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CALCULATORS -->
+<!-- ============================================================ -->
+<section id="calc">
+  <div class="section-title">互動計算機</div>
+  <div class="calc-grid">
+
+    <!-- GOF Calculator -->
+    <div class="calc-card">
+      <h3>適合度 / 獨立性 χ² 計算機</h3>
+      <label>自由度 (df)</label>
+      <input type="number" id="gof-df" value="3" min="1" step="1">
+      <label>χ² 統計量</label>
+      <input type="number" id="gof-chi" value="10.25" step="0.001">
+      <div class="chart-wrap"><canvas id="gofChart"></canvas></div>
+      <button class="calc-btn" onclick="calcGOF()">計算 p 值</button>
+      <div class="calc-result" id="gof-result">
+        <div style="color:var(--muted);font-size:.85rem">輸入自由度與 χ² 統計量後按計算</div>
+      </div>
+    </div>
+
+    <!-- JB Calculator -->
+    <div class="calc-card">
+      <h3>Jarque-Bera 檢定計算機</h3>
+      <label>樣本數 n</label>
+      <input type="number" id="jb-n" value="50" min="10">
+      <label>偏態係數 S</label>
+      <input type="number" id="jb-s" value="2.319" step="0.001">
+      <label>超額峰態係數 K</label>
+      <input type="number" id="jb-k" value="6.732" step="0.001">
+      <label>顯著水準 α</label>
+      <select id="jb-alpha">
+        <option value="0.10">10%</option>
+        <option value="0.05" selected>5%</option>
+        <option value="0.01">1%</option>
+      </select>
+      <div class="chart-wrap"><canvas id="jbChart"></canvas></div>
+      <button class="calc-btn" onclick="calcJB()">計算 JB 統計量</button>
+      <div class="calc-result" id="jb-result">
+        <div style="color:var(--muted);font-size:.85rem">輸入參數後按計算</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FORMULA SUMMARY -->
+<!-- ============================================================ -->
+<section id="summary">
+  <div class="section-title">公式總整理</div>
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="sc-title">12.1 適合度檢定</div>
+      <div class="formula-box" style="text-align:left;font-size:.85rem">
+        <div class="formula" style="font-size:.9rem">χ²<sub>k-1</sub> = Σ(o<sub>i</sub>−e<sub>i</sub>)²/e<sub>i</sub></div>
+        <div class="note" style="text-align:left;margin-top:.5rem">
+          • e<sub>i</sub> = n·p<sub>i</sub><br>
+          • df = k−1<br>
+          • 右尾，e<sub>i</sub>≥5
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sc-title">12.2 獨立性檢定</div>
+      <div class="formula-box" style="text-align:left;font-size:.85rem">
+        <div class="formula" style="font-size:.9rem">χ²<sub>(r-1)(c-1)</sub> = ΣΣ(o<sub>ij</sub>−e<sub>ij</sub>)²/e<sub>ij</sub></div>
+        <div class="note" style="text-align:left;margin-top:.5rem">
+          • e<sub>ij</sub> = (列合計×行合計)/n<br>
+          • df = (r−1)(c−1)<br>
+          • 右尾，e<sub>ij</sub>≥5
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sc-title">12.3 常態性 GOF 檢定</div>
+      <div class="formula-box" style="text-align:left;font-size:.85rem">
+        <div class="formula" style="font-size:.9rem">χ²<sub>k-3</sub> = Σ(o<sub>i</sub>−e<sub>i</sub>)²/e<sub>i</sub></div>
+        <div class="note" style="text-align:left;margin-top:.5rem">
+          • df = k−3（估計 μ 和 σ 各1個）<br>
+          • p<sub>i</sub> 由常態分配計算<br>
+          • 右尾，e<sub>i</sub>≥5
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sc-title">12.4 Jarque-Bera 檢定</div>
+      <div class="formula-box" style="text-align:left;font-size:.85rem">
+        <div class="formula" style="font-size:.9rem">χ²₂ = (n/6)[S² + K²/4]</div>
+        <div class="note" style="text-align:left;margin-top:.5rem">
+          • df = 2（固定不變）<br>
+          • S = 偏態係數（SKEW）<br>
+          • K = 超額峰態係數（KURT）<br>
+          • 右尾，無需分組
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:1.2rem">
+    <h3>三種檢定比較</h3>
+    <table>
+      <tr><th>檢定類型</th><th>變數類型</th><th>H₀</th><th>df</th><th>有效條件</th></tr>
+      <tr><td>適合度檢定 (12.1)</td><td>類別（單一）</td><td>比例等於假設值</td><td>k−1</td><td>每個 e<sub>i</sub>≥5</td></tr>
+      <tr><td>獨立性檢定 (12.2)</td><td>類別（兩個）</td><td>兩變數獨立</td><td>(r−1)(c−1)</td><td>每個 e<sub>ij</sub>≥5</td></tr>
+      <tr><td>常態性 GOF (12.3)</td><td>數值（轉頻率）</td><td>服從常態分配</td><td>k−3</td><td>每個 e<sub>i</sub>≥5</td></tr>
+      <tr><td>Jarque-Bera (12.4)</td><td>數值（直接用）</td><td>S=0 且 K=0</td><td>2</td><td>通常 n≥30</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PROFESSOR NOTES -->
+<!-- ============================================================ -->
+<section id="notes">
+  <div class="prof-notes">
+    <h2>教授重點筆記</h2>
+    <ul>
+      <li>卡方檢定統一公式：χ² = Σ(觀測−期望)²/期望，所有卡方檢定都套用這個邏輯。</li>
+      <li>期望頻率條件：每個類別的期望頻率 e<sub>i</sub> 或 e<sub>ij</sub> 必須 ≥ 5，否則需合併類別（如範例12.1合併廠商4+5）。</li>
+      <li>適合度 vs 獨立性：前者只有1個類別變數（比較比例），後者有2個類別變數（看關聯性）。</li>
+      <li>常態性 GOF 的 df = k−3，不是 k−1！因為從資料估計了 μ 和 σ 兩個母數。</li>
+      <li>JB 檢定永遠是 df=2，不隨樣本數或區間數改變。</li>
+      <li>JB 優點：不需分組、不受分組方式影響；缺點：與 R 的計算可能有微小差異（偏態/峰態係數的公式不同）。</li>
+      <li>所有卡方類型的假設檢定都是右尾檢定（χ² 值只有正數，越大表示差異越大）。</li>
+      <li>均值 &lt; 中位數 → 左偏（負偏態，S &lt; 0）；均值 &gt; 中位數 → 右偏（正偏態，S &gt; 0）。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- QUIZ -->
+<!-- ============================================================ -->
+<section id="quiz">
+  <div class="quiz-wrap">
+    <h2 style="margin-bottom:1.2rem">隨堂測驗</h2>
+
+    <div class="quiz-q">
+      <p>1. 進行適合度檢定時，若 k=5 個類別，自由度為何？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q1" value="a"> 5</label>
+        <label><input type="radio" name="q1" value="b"> 4</label>
+        <label><input type="radio" name="q1" value="c"> 3</label>
+        <label><input type="radio" name="q1" value="d"> 2</label>
+      </div>
+      <div class="quiz-feedback" id="fb1"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>2. 在獨立性卡方檢定中，3列4行的列聯表，df 為何？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q2" value="a"> 12</label>
+        <label><input type="radio" name="q2" value="b"> 7</label>
+        <label><input type="radio" name="q2" value="c"> 6</label>
+        <label><input type="radio" name="q2" value="d"> 5</label>
+      </div>
+      <div class="quiz-feedback" id="fb2"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>3. 常態性適合度檢定若分成 k=6 個區間，df 為何？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q3" value="a"> 6</label>
+        <label><input type="radio" name="q3" value="b"> 5</label>
+        <label><input type="radio" name="q3" value="c"> 4</label>
+        <label><input type="radio" name="q3" value="d"> 3</label>
+      </div>
+      <div class="quiz-feedback" id="fb3"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>4. n=100, S=1, K=2，Jarque-Bera 統計量為何？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q4" value="a"> 41.67</label>
+        <label><input type="radio" name="q4" value="b"> 37.50</label>
+        <label><input type="radio" name="q4" value="c"> 26.35</label>
+        <label><input type="radio" name="q4" value="d"> 33.33</label>
+      </div>
+      <div class="quiz-feedback" id="fb4"></div>
+    </div>
+
+    <div class="quiz-q">
+      <p>5. 執行適合度檢定時，某類別期望頻率 e<sub>i</sub>=3，應如何處理？</p>
+      <div class="quiz-opts">
+        <label><input type="radio" name="q5" value="a"> 直接使用，不需調整</label>
+        <label><input type="radio" name="q5" value="b"> 將該類別與相鄰類別合併，使 e<sub>i</sub>≥5</label>
+        <label><input type="radio" name="q5" value="c"> 改用獨立性檢定</label>
+        <label><input type="radio" name="q5" value="d"> 增加樣本後忽略此問題</label>
+      </div>
+      <div class="quiz-feedback" id="fb5"></div>
+    </div>
+
+    <button class="quiz-btn" onclick="gradeQuiz()">提交答案</button>
+    <div id="quiz-score" style="margin-top:1rem;font-size:1rem;font-weight:700;display:none"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── Toggle examples ──────────────────────────────────────────
+function toggleExample(header){
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ── GOF / Independence χ² Calculator ────────────────────────
+let gofChartInst = null;
+
+function calcGOF(){
+  const df = parseFloat(document.getElementById('gof-df').value);
+  const chi = parseFloat(document.getElementById('gof-chi').value);
+  if(isNaN(df)||isNaN(chi)||df<1||chi<0){
+    document.getElementById('gof-result').innerHTML='<span style="color:var(--s5)">請輸入有效的 df（≥1）與 χ²（≥0）</span>';
+    return;
+  }
+  const pval = 1 - jStat.chisquare.cdf(chi, df);
+  const cv05 = jStat.chisquare.inv(0.95, df);
+  const cv01 = jStat.chisquare.inv(0.99, df);
+  const reject05 = chi > cv05;
+  const reject01 = chi > cv01;
+
+  document.getElementById('gof-result').innerHTML = `
+    <div class="stat">χ²<sub>${df}</sub> = ${chi.toFixed(4)}</div>
+    <div style="margin-top:.4rem">p 值（右尾）：<strong style="color:var(--s2)">${pval.toFixed(4)}</strong></div>
+    <div>臨界值 α=5%：${cv05.toFixed(3)} ${reject05?'<span class="result reject">拒絕 H₀</span>':'<span class="result not-reject">不拒絕 H₀</span>'}</div>
+    <div>臨界值 α=1%：${cv01.toFixed(3)} ${reject01?'<span class="result reject">拒絕 H₀</span>':'<span class="result not-reject">不拒絕 H₀</span>'}</div>
+  `;
+  drawGOFChart(df, chi);
+}
+
+function drawGOFChart(df, chi){
+  const ctx = document.getElementById('gofChart').getContext('2d');
+  if(gofChartInst) gofChartInst.destroy();
+  const maxX = Math.max(chi*1.4, jStat.chisquare.inv(0.999, df));
+  const N = 200;
+  const labels=[], dataAll=[], dataRej=[];
+  for(let i=0;i<=N;i++){
+    const x = (maxX/N)*i;
+    labels.push(x.toFixed(1));
+    const y = x>0 ? jStat.chisquare.pdf(x,df) : 0;
+    dataAll.push({x,y});
+    dataRej.push(x>=chi ? {x,y} : {x,y:0});
+  }
+  gofChartInst = new Chart(ctx,{
+    type:'line',
+    data:{
+      datasets:[
+        {label:'χ² 分配',data:dataAll,borderColor:'#38bdf8',borderWidth:1.5,fill:false,pointRadius:0},
+        {label:'拒絕域',data:dataRej,borderColor:'transparent',backgroundColor:'rgba(248,113,113,0.4)',fill:true,pointRadius:0}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{x:{type:'linear',title:{display:true,text:'χ²',color:'#94a3b8'},ticks:{color:'#94a3b8',maxTicksLimit:6},grid:{color:'#2d3555'}},y:{display:false}},
+      plugins:{legend:{display:false}},
+      animation:{duration:300}
+    }
+  });
+}
+
+// ── JB Calculator ────────────────────────────────────────────
+let jbChartInst = null;
+
+function calcJB(){
+  const n = parseFloat(document.getElementById('jb-n').value);
+  const S = parseFloat(document.getElementById('jb-s').value);
+  const K = parseFloat(document.getElementById('jb-k').value);
+  const alpha = parseFloat(document.getElementById('jb-alpha').value);
+  if(isNaN(n)||isNaN(S)||isNaN(K)||n<2){
+    document.getElementById('jb-result').innerHTML='<span style="color:var(--s5)">請輸入有效數值</span>';
+    return;
+  }
+  const jb = (n/6)*(S*S + K*K/4);
+  const pval = 1 - jStat.chisquare.cdf(jb, 2);
+  const cv = jStat.chisquare.inv(1-alpha, 2);
+  const reject = jb > cv;
+
+  document.getElementById('jb-result').innerHTML = `
+    <div class="stat">JB = ${jb.toFixed(4)}</div>
+    <div style="margin-top:.4rem">df = 2（固定）</div>
+    <div>p 值（右尾）：<strong style="color:var(--s2)">${pval.toFixed(4)}</strong></div>
+    <div>臨界值 χ²₂ (α=${(alpha*100).toFixed(0)}%)：${cv.toFixed(3)}</div>
+    <div style="margin-top:.3rem">${reject?'<span class="result reject">拒絕 H₀：資料不服從常態分配</span>':'<span class="result not-reject">不拒絕 H₀：無足夠證據否定常態性</span>'}</div>
+  `;
+  drawJBChart(jb);
+}
+
+function drawJBChart(jb){
+  const ctx = document.getElementById('jbChart').getContext('2d');
+  if(jbChartInst) jbChartInst.destroy();
+  const maxX = Math.max(jb*1.4, 15);
+  const N = 200;
+  const dataAll=[], dataRej=[];
+  for(let i=0;i<=N;i++){
+    const x = (maxX/N)*i;
+    const y = x>0 ? jStat.chisquare.pdf(x,2) : 0;
+    dataAll.push({x,y});
+    dataRej.push(x>=jb ? {x,y} : {x,y:0});
+  }
+  jbChartInst = new Chart(ctx,{
+    type:'line',
+    data:{
+      datasets:[
+        {label:'χ²₂ 分配',data:dataAll,borderColor:'#a78bfa',borderWidth:1.5,fill:false,pointRadius:0},
+        {label:'拒絕域',data:dataRej,borderColor:'transparent',backgroundColor:'rgba(248,113,113,0.4)',fill:true,pointRadius:0}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{x:{type:'linear',title:{display:true,text:'χ²₂',color:'#94a3b8'},ticks:{color:'#94a3b8',maxTicksLimit:6},grid:{color:'#2d3555'}},y:{display:false}},
+      plugins:{legend:{display:false}},
+      animation:{duration:300}
+    }
+  });
+}
+
+// ── Quiz ────────────────────────────────────────────────────
+// q4: n=100, S=1, K=2 → JB = (100/6)[1²+2²/4] = (100/6)(1+1) = 200/6 ≈ 33.33 → d
+
+function gradeQuiz(){
+  const qAnswers = {q1:'b',q2:'c',q3:'d',q4:'d',q5:'b'};
+  const explain = {
+    q1:'df = k−1 = 5−1 = 4',
+    q2:'df = (r−1)(c−1) = (3−1)(4−1) = 2×3 = 6',
+    q3:'df = k−3 = 6−3 = 3（估計了 μ 和 σ 各1個自由度）',
+    q4:'JB = (100/6)[1²+2²/4] = 16.667×[1+1] = 16.667×2 ≈ 33.33',
+    q5:'e<sub>i</sub>&lt;5 時需與相鄰類別合併，確保所有期望頻率≥5，檢定才有效'
+  };
+  let score=0;
+  for(const [q,ans] of Object.entries(qAnswers)){
+    const sel = document.querySelector(`input[name=${q}]:checked`);
+    const fb = document.getElementById('fb'+q.slice(1));
+    fb.style.display='block';
+    if(sel && sel.value===ans){
+      score++;
+      fb.className='quiz-feedback correct';
+      fb.innerHTML=`✓ 正確！${explain[q]}`;
+    } else {
+      fb.className='quiz-feedback wrong';
+      fb.innerHTML=`✗ 正確答案：${ans.toUpperCase()}｜${explain[q]}`;
+    }
+  }
+  const scoreEl = document.getElementById('quiz-score');
+  scoreEl.style.display='block';
+  scoreEl.style.color = score>=4?'var(--s4)':score>=3?'var(--s2)':'var(--s5)';
+  scoreEl.textContent = `得分：${score}/5（${score>=4?'優秀！':score>=3?'不錯！':'再加油！'}）`;
+}
+
+// Init charts on load
+window.addEventListener('load',()=>{
+  calcGOF();
+  calcJB();
+});
+</script>
+</body>
+</html>
