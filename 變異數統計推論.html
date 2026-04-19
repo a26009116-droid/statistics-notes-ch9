@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第11章：變異數統計推論</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstat@1.9.6/dist/jstat.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1117;--card:#1a1d2e;--card2:#222640;
+    --chi:#38bdf8;--f:#f59e0b;--green:#4ade80;--red:#f87171;
+    --text:#e2e8f0;--sub:#94a3b8;--border:#2d3561;
+    --p11-1:#38bdf8;--p11-2:#f59e0b;--p11-3:#a78bfa;--p11-4:#34d399;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6}
+  header{background:linear-gradient(135deg,#0c1445,#1e3a7a);padding:2.5rem 2rem;text-align:center;border-bottom:2px solid var(--chi)}
+  header h1{font-size:2rem;color:#fff;margin-bottom:.4rem}
+  header p{color:#93c5fd;font-size:1rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:1rem}
+  .chip{background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.3);color:var(--chi);padding:.3rem .9rem;border-radius:999px;font-size:.8rem}
+  nav{background:var(--card);padding:.8rem 2rem;display:flex;flex-wrap:wrap;gap:.5rem;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+  nav a{color:var(--sub);text-decoration:none;font-size:.85rem;padding:.3rem .7rem;border-radius:6px;transition:all .2s}
+  nav a:hover{background:var(--card2);color:var(--text)}
+  main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+  section{margin-bottom:3rem}
+  h2{font-size:1.4rem;margin-bottom:1.2rem;padding-bottom:.5rem;border-bottom:2px solid var(--border)}
+  h2 span.badge{font-size:.75rem;padding:.2rem .6rem;border-radius:6px;margin-left:.7rem;vertical-align:middle;font-weight:600}
+  h3{font-size:1.1rem;margin-bottom:.8rem;color:var(--chi)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.4rem}
+  .card.chi{border-color:rgba(56,189,248,.35)}
+  .card.fcard{border-color:rgba(245,158,11,.35)}
+  .card.green{border-color:rgba(74,222,128,.35)}
+  .card.purple{border-color:rgba(167,139,250,.35)}
+  .formula-box{background:var(--card2);border-left:4px solid var(--chi);border-radius:0 8px 8px 0;padding:1rem 1.2rem;margin:.8rem 0;font-family:'Courier New',monospace;font-size:.95rem;overflow-x:auto}
+  .formula-box.f-col{border-left-color:var(--f)}
+  .formula-box.green-col{border-left-color:var(--green)}
+  label{display:block;font-size:.85rem;color:var(--sub);margin-bottom:.3rem;margin-top:.8rem}
+  input,select{width:100%;padding:.5rem .7rem;background:#11142a;border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.9rem}
+  input:focus,select:focus{outline:none;border-color:var(--chi)}
+  button{margin-top:.8rem;padding:.6rem 1.4rem;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .2s}
+  .btn-chi{background:linear-gradient(135deg,#0369a1,#38bdf8);color:#fff}
+  .btn-f{background:linear-gradient(135deg,#b45309,#f59e0b);color:#fff}
+  .btn-green{background:linear-gradient(135deg,#065f46,#34d399);color:#fff}
+  button:hover{filter:brightness(1.15)}
+  .result-box{margin-top:1rem;padding:1rem;background:var(--card2);border-radius:8px;font-size:.9rem;display:none}
+  .result-box.show{display:block}
+  .result-box .reject{color:var(--red);font-weight:700}
+  .result-box .noreject{color:var(--green);font-weight:700}
+  canvas.chart-canvas{width:100%!important;max-height:220px}
+  .example{border:1px solid var(--border);border-radius:10px;margin-bottom:.8rem;overflow:hidden}
+  .example-header{background:var(--card2);padding:.8rem 1.1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.9rem}
+  .example-header:hover{background:#2a2f55}
+  .example-body{padding:1.1rem;display:none;background:var(--card);font-size:.88rem;line-height:1.7}
+  .example-body.open{display:block}
+  .arrow{transition:transform .25s}
+  .open-arrow{transform:rotate(180deg)}
+  table.data-table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.8rem}
+  table.data-table th{background:var(--card2);padding:.5rem .8rem;text-align:center;border:1px solid var(--border);color:var(--chi)}
+  table.data-table td{padding:.5rem .8rem;text-align:center;border:1px solid var(--border)}
+  .highlight{background:rgba(56,189,248,.1)}
+  .tag{display:inline-block;padding:.15rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;margin:.1rem}
+  .tag-reject{background:rgba(248,113,113,.2);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+  .tag-noreject{background:rgba(74,222,128,.2);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+  .summary-table{width:100%;border-collapse:collapse;font-size:.85rem}
+  .summary-table th{background:rgba(56,189,248,.15);padding:.6rem .8rem;border:1px solid var(--border);text-align:center}
+  .summary-table td{padding:.5rem .8rem;border:1px solid var(--border);text-align:center}
+  .quiz-q{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin-bottom:1rem}
+  .quiz-q p{margin-bottom:.8rem;font-weight:600}
+  .quiz-opt{display:block;padding:.5rem .9rem;margin:.3rem 0;background:var(--card2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:.88rem;transition:all .2s}
+  .quiz-opt:hover{border-color:var(--chi);background:#1e2952}
+  .quiz-opt.correct{background:rgba(74,222,128,.15);border-color:var(--green);color:var(--green)}
+  .quiz-opt.wrong{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red)}
+  .tabs{display:flex;gap:.4rem;margin-bottom:1rem}
+  .tab{padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;border:1px solid var(--border);background:var(--card2);color:var(--sub);transition:all .2s}
+  .tab.active{background:linear-gradient(135deg,#0369a1,#38bdf8);color:#fff;border-color:transparent}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem;margin:.8rem 0}
+  .info-item{background:var(--card2);border-radius:8px;padding:.8rem 1rem;text-align:center}
+  .info-item .val{font-size:1.4rem;font-weight:700;color:var(--chi)}
+  .info-item .desc{font-size:.78rem;color:var(--sub);margin-top:.2rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>第 11 章｜變異數統計推論</h1>
+  <p>Statistical Inference Concerning Population Variance</p>
+  <div class="chips">
+    <span class="chip">χ² 分配</span>
+    <span class="chip">F 分配</span>
+    <span class="chip">單一母體變異數</span>
+    <span class="chip">兩母體變異數比</span>
+    <span class="chip">共同基金風險分析</span>
+  </div>
+</header>
+<nav>
+  <a href="#s11-1">11.1 χ² 分配</a>
+  <a href="#s11-2">11.2 單一變異數推論</a>
+  <a href="#s11-3">11.3 F 分配</a>
+  <a href="#s11-4">11.4 兩變異數比推論</a>
+  <a href="#calc-chi">χ² 計算機</a>
+  <a href="#calc-f">F 計算機</a>
+  <a href="#summary">公式整理</a>
+  <a href="#quiz">自我測驗</a>
+</nav>
+<main>
+
+<!-- ===== 11.1 ===== -->
+<section id="s11-1">
+  <h2>11.1 χ² 分配 <span class="badge" style="background:rgba(56,189,248,.2);color:var(--chi)">LO 11.1</span></h2>
+  <p style="color:var(--sub);margin-bottom:1rem">χ²（卡方）分配用於對單一母體變異數 σ² 進行統計推論。</p>
+
+  <div class="grid2">
+    <div class="card chi">
+      <h3>χ² 統計量</h3>
+      <p>從常態母體隨機抽取 n 個樣本，樣本變異數 s² 滿足：</p>
+      <div class="formula-box">χ²<sub>df</sub> = (n−1)s² / σ²<br>df = n − 1</div>
+      <p style="font-size:.85rem;color:var(--sub);margin-top:.6rem">此統計量服從自由度為 df = n−1 的 χ² 分配。</p>
+    </div>
+    <div class="card chi">
+      <h3>χ² 分配特性</h3>
+      <div class="info-grid">
+        <div class="info-item"><div class="val">0 ~ ∞</div><div class="desc">值域範圍</div></div>
+        <div class="info-item"><div class="val">正偏</div><div class="desc">形狀（df 大時趨對稱）</div></div>
+        <div class="info-item"><div class="val">df</div><div class="desc">決定分配形狀</div></div>
+        <div class="info-item"><div class="val">常態</div><div class="desc">適用條件（母體需常態）</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card chi" style="margin-top:1.2rem">
+    <h3>χ² 分配視覺化</h3>
+    <div style="max-width:600px;margin:0 auto">
+      <canvas id="chiChart" class="chart-canvas"></canvas>
+    </div>
+    <div style="text-align:center;margin-top:.5rem">
+      <label style="display:inline;margin-right:.5rem">df =</label>
+      <select id="chiDfSel" style="width:auto;display:inline-block;padding:.3rem .6rem" onchange="drawChiChart()">
+        <option value="5">5</option><option value="10" selected>10</option>
+        <option value="20">20</option><option value="30">30</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card chi" style="margin-top:1.2rem">
+    <h3>χ² 臨界值查表（常用）</h3>
+    <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead><tr><th>df</th><th>χ²<sub>0.995</sub></th><th>χ²<sub>0.975</sub></th><th>χ²<sub>0.950</sub></th><th>χ²<sub>0.100</sub></th><th>χ²<sub>0.050</sub></th><th>χ²<sub>0.025</sub></th><th>χ²<sub>0.010</sub></th></tr></thead>
+      <tbody>
+        <tr><td>5</td><td>0.412</td><td>0.831</td><td>1.145</td><td>9.236</td><td>11.071</td><td>12.833</td><td>15.086</td></tr>
+        <tr><td>10</td><td>2.156</td><td>3.247</td><td>3.940</td><td>15.987</td><td>18.307</td><td>20.483</td><td>23.209</td></tr>
+        <tr><td>20</td><td>7.434</td><td>9.591</td><td>10.851</td><td>28.412</td><td>31.410</td><td>34.170</td><td>37.566</td></tr>
+        <tr><td>35</td><td>17.192</td><td>20.569</td><td>22.465</td><td>46.059</td><td>49.802</td><td>53.203</td><td>57.342</td></tr>
+        <tr><td>100</td><td>67.328</td><td>74.222</td><td>77.929</td><td>118.342</td><td>124.342</td><td>129.561</td><td>135.807</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11.2 ===== -->
+<section id="s11-2">
+  <h2>11.2 單一母體變異數推論 <span class="badge" style="background:rgba(56,189,248,.2);color:var(--chi)">LO 11.2</span></h2>
+
+  <div class="grid2">
+    <div class="card chi">
+      <h3>變異數的信賴區間</h3>
+      <div class="formula-box">
+        (1−α)×100% CI for σ²：<br><br>
+        [ (n−1)s² / χ²<sub>α/2</sub> ,  (n−1)s² / χ²<sub>1−α/2</sub> ]<br><br>
+        標準差 CI = 取兩端開根號
+      </div>
+    </div>
+    <div class="card chi">
+      <h3>變異數的假設檢定</h3>
+      <div class="formula-box">
+        H₀: σ² = σ₀²<br><br>
+        χ²<sub>df</sub> = (n−1)s² / σ₀²<br>df = n − 1<br><br>
+        右尾：Hₐ: σ² &gt; σ₀²<br>
+        左尾：Hₐ: σ² &lt; σ₀²<br>
+        雙尾：Hₐ: σ² ≠ σ₀²
+      </div>
+    </div>
+  </div>
+
+  <!-- Examples -->
+  <h3 style="margin-top:1.5rem;color:var(--sub)">例題</h3>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.2｜成長基金 vs 價值基金 — 95% 標準差信賴區間</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>n = 36，成長基金 s = 23.0960%，價值基金 s = 17.9980%，計算 95% CI。</p>
+      <p style="margin-top:.6rem"><strong>成長基金 σ² CI：</strong></p>
+      <div class="formula-box" style="font-size:.85rem">
+        df=35，χ²<sub>0.025,35</sub>=53.203，χ²<sub>0.975,35</sub>=20.569<br><br>
+        s²=(23.0960)²=533.43<br>
+        下界=(35×533.43)/53.203=351.14<br>
+        上界=(35×533.43)/20.569=907.98<br>
+        σ CI=[√351.14, √907.98]=[18.74%, 30.13%]
+      </div>
+      <p style="margin-top:.6rem"><strong>價值基金 σ² CI：</strong></p>
+      <div class="formula-box" style="font-size:.85rem">
+        s²=(17.9980)²=323.93<br>
+        下界=(35×323.93)/53.203=213.17<br>
+        上界=(35×323.93)/20.569=550.60<br>
+        σ CI=[√213.17, √550.60]=[14.60%, 23.46%]
+      </div>
+      <p style="margin-top:.6rem;color:var(--sub)">可見成長基金的不確定性（風險區間）比價值基金更寬。</p>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.3｜成長基金標準差是否 > 20%？（右尾，α=0.01）</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>H₀: σ²=400（σ=20%），Hₐ: σ²>400；n=36，s=23.0960</p>
+      <div class="formula-box" style="font-size:.85rem">
+        χ² = (35)(23.0960²)/400 = (35)(533.43)/400 = 46.67<br>
+        p-value = P(χ²<sub>35</sub> > 46.67) ≈ 0.085<br><br>
+        α = 0.01 &lt; p = 0.085
+      </div>
+      <span class="tag tag-noreject">不拒絕 H₀</span>
+      <p style="margin-top:.6rem;color:var(--sub)">在 1% 顯著水準下，無足夠證據認為成長基金的風險（σ²）超過 400。</p>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.4｜價值基金標準差是否 ≠ 15%？（雙尾，α=0.05）</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>H₀: σ²=225（σ=15%），Hₐ: σ²≠225；n=36，s=17.9980</p>
+      <div class="formula-box" style="font-size:.85rem">
+        χ² = (35)(17.9980²)/225 = (35)(323.93)/225 = 50.39<br>
+        因為 χ² &gt; σ₀²，p-value = 2×P(χ²<sub>35</sub> > 50.39) ≈ 0.091<br><br>
+        α = 0.05 &lt; p = 0.091
+      </div>
+      <span class="tag tag-noreject">不拒絕 H₀</span>
+      <p style="margin-top:.6rem;color:var(--sub)">在 5% 顯著水準下，無法認為價值基金的標準差顯著不同於 15%。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CHI CALCULATOR ===== -->
+<section id="calc-chi">
+  <h2>χ² 計算機（單一母體變異數）</h2>
+  <div class="card chi">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('ci-chi','chiTab')">信賴區間</div>
+      <div class="tab" onclick="switchTab('ht-chi','chiTab')">假設檢定</div>
+    </div>
+    <div id="ci-chi" class="tab-content active">
+      <div class="grid2">
+        <div>
+          <label>樣本數 n</label><input id="ci_n" type="number" value="36">
+          <label>樣本標準差 s</label><input id="ci_s" type="number" value="23.096">
+          <label>信心水準 (1−α)%</label>
+          <select id="ci_conf">
+            <option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option>
+          </select>
+          <button class="btn-chi" onclick="calcChiCI()">計算 CI</button>
+        </div>
+        <div>
+          <canvas id="chiCIChart" class="chart-canvas" style="max-height:200px"></canvas>
+        </div>
+      </div>
+      <div class="result-box" id="chiCIResult"></div>
+    </div>
+    <div id="ht-chi" class="tab-content">
+      <div class="grid2">
+        <div>
+          <label>樣本數 n</label><input id="ht_n" type="number" value="36">
+          <label>樣本標準差 s</label><input id="ht_s" type="number" value="23.096">
+          <label>假設 σ₀（H₀: σ²=σ₀²）</label><input id="ht_s0" type="number" value="20">
+          <label>顯著水準 α</label>
+          <select id="ht_alpha"><option value="0.10">0.10</option><option value="0.05" selected>0.05</option><option value="0.01">0.01</option></select>
+          <label>檢定方向</label>
+          <select id="ht_tail">
+            <option value="right">右尾（Hₐ: σ² &gt; σ₀²）</option>
+            <option value="left">左尾（Hₐ: σ² &lt; σ₀²）</option>
+            <option value="two">雙尾（Hₐ: σ² ≠ σ₀²）</option>
+          </select>
+          <button class="btn-chi" onclick="calcChiHT()">執行檢定</button>
+        </div>
+        <div>
+          <canvas id="chiHTChart" class="chart-canvas" style="max-height:200px"></canvas>
+        </div>
+      </div>
+      <div class="result-box" id="chiHTResult"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11.3 ===== -->
+<section id="s11-3">
+  <h2>11.3 F 分配 <span class="badge" style="background:rgba(245,158,11,.2);color:var(--f)">LO 11.3</span></h2>
+  <p style="color:var(--sub);margin-bottom:1rem">F 分配用於比較兩個母體的變異數。</p>
+
+  <div class="grid2">
+    <div class="card fcard">
+      <h3 style="color:var(--f)">F 分配定義</h3>
+      <p>當 σ₁²=σ₂² 時，來自兩常態母體的獨立樣本滿足：</p>
+      <div class="formula-box f-col">
+        F<sub>df₁,df₂</sub> = s₁² / s₂²<br><br>
+        df₁ = n₁ − 1，df₂ = n₂ − 1
+      </div>
+      <p style="font-size:.85rem;color:var(--sub);margin-top:.6rem">F 分配由兩組自由度共同決定，正偏態，值域 [0, ∞)。</p>
+    </div>
+    <div class="card fcard">
+      <h3 style="color:var(--f)">F 分配特性</h3>
+      <div class="info-grid">
+        <div class="info-item"><div class="val" style="color:var(--f)">0 ~ ∞</div><div class="desc">值域</div></div>
+        <div class="info-item"><div class="val" style="color:var(--f)">正偏</div><div class="desc">右偏（df 大時趨對稱）</div></div>
+        <div class="info-item"><div class="val" style="color:var(--f)">df₁,df₂</div><div class="desc">兩組自由度</div></div>
+        <div class="info-item"><div class="val" style="color:var(--f)">常態</div><div class="desc">兩母體需常態分配</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fcard" style="margin-top:1.2rem">
+    <h3 style="color:var(--f)">F 分配視覺化</h3>
+    <div style="max-width:600px;margin:0 auto">
+      <canvas id="fChart" class="chart-canvas"></canvas>
+    </div>
+    <div style="text-align:center;margin-top:.5rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <div><label style="display:inline;margin-right:.3rem">df₁ =</label>
+      <select id="fDf1Sel" style="width:auto;display:inline-block;padding:.3rem .6rem" onchange="drawFChart()">
+        <option value="5">5</option><option value="7" selected>7</option><option value="10">10</option><option value="20">20</option>
+      </select></div>
+      <div><label style="display:inline;margin-right:.3rem">df₂ =</label>
+      <select id="fDf2Sel" style="width:auto;display:inline-block;padding:.3rem .6rem" onchange="drawFChart()">
+        <option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="30">30</option>
+      </select></div>
+    </div>
+  </div>
+
+  <div class="example" style="margin-top:1.2rem">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.5｜找 F 臨界值</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>a. P(F<sub>7,10</sub> > x) = 0.025 → F<sub>0.025</sub>(7,10) = <strong>3.95</strong></p>
+      <p>b. P(F<sub>7,10</sub> &lt; x) = 0.05 → F<sub>0.95</sub>(7,10) = <strong>0.27</strong></p>
+      <div class="formula-box f-col" style="font-size:.83rem">
+        Excel: =F.INV.RT(0.025, 7, 10) → 3.95<br>
+        Excel: =F.INV(0.05, 7, 10) → 0.27<br>
+        R: qf(0.025, 7, 10, lower.tail=FALSE) → 3.95
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11.4 ===== -->
+<section id="s11-4">
+  <h2>11.4 兩母體變異數比推論 <span class="badge" style="background:rgba(245,158,11,.2);color:var(--f)">LO 11.4</span></h2>
+
+  <div class="grid2">
+    <div class="card fcard">
+      <h3 style="color:var(--f)">σ₁²/σ₂² 的信賴區間</h3>
+      <div class="formula-box f-col">
+        (1−α)×100% CI for σ₁²/σ₂²：<br><br>
+        [ (s₁²/s₂²)×(1/F<sub>α/2</sub>(df₁,df₂)) ,<br>
+          (s₁²/s₂²)×F<sub>α/2</sub>(df₂,df₁) ]
+      </div>
+    </div>
+    <div class="card fcard">
+      <h3 style="color:var(--f)">σ₁²/σ₂² 的假設檢定</h3>
+      <div class="formula-box f-col">
+        H₀: σ₁²/σ₂² = 1<br><br>
+        F<sub>df₁,df₂</sub> = s₁² / s₂²<br><br>
+        右尾：Hₐ: σ₁² &gt; σ₂²<br>
+        左尾：Hₐ: σ₁² &lt; σ₂²<br>
+        雙尾：Hₐ: σ₁² ≠ σ₂²
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:1.5rem;color:var(--sub)">例題</h3>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.6｜統計考試兩班變異數比 95% CI</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>n₁=11，s₁²=182.25；n₂=15，s₂²=192.25；95% CI for σ₁²/σ₂²</p>
+      <div class="formula-box f-col" style="font-size:.85rem">
+        df₁=10，df₂=14，α/2=0.025<br>
+        s₁²/s₂² = 182.25/192.25 = 0.948<br>
+        F<sub>0.025</sub>(10,14) = 3.08，F<sub>0.025</sub>(14,10) = 3.70<br><br>
+        下界 = 0.948 / 3.08 = 0.308<br>
+        上界 = 0.948 × 3.70 = 1.507<br>
+        95% CI = [0.31, 1.51]
+      </div>
+      <p style="color:var(--sub);font-size:.85rem;margin-top:.6rem">CI 包含 1，不能認為兩班變異數有顯著差異。</p>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.8｜成長基金風險 > 價值基金風險？（右尾，α=0.01）</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>H₀: σ₁²/σ₂²=1，Hₐ: σ₁²/σ₂²>1（成長基金更險）</p>
+      <p>n₁=n₂=36，s₁=23.0960（成長），s₂=17.9980（價值）</p>
+      <div class="formula-box f-col" style="font-size:.85rem">
+        F<sub>35,35</sub> = (23.0960)²/(17.9980)² = 533.43/323.93 = 1.647<br>
+        p-value = P(F<sub>35,35</sub> > 1.647) ≈ 0.062<br><br>
+        α=0.01 &lt; p=0.062
+      </div>
+      <span class="tag tag-noreject">不拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.85rem;margin-top:.6rem">在 1% 顯著水準下，無法證明成長基金比價值基金更具風險性。</p>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-header" onclick="toggleEx(this)">
+      <span>例題 11.9｜汽車零件 A、B 的日需求變異數是否不同？（雙尾，α=0.05）</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="example-body">
+      <p>H₀: σ₁²/σ₂²=1，Hₐ: σ₁²/σ₂²≠1；n₁=n₂=30</p>
+      <div class="formula-box f-col" style="font-size:.85rem">
+        F<sub>29,29</sub> = VAR_A / VAR_B = 1.105<br>
+        p-value = 2×P(F<sub>29,29</sub> > 1.105) ≈ 0.790<br><br>
+        α=0.05 &lt; p=0.790
+      </div>
+      <span class="tag tag-noreject">不拒絕 H₀</span>
+      <p style="color:var(--sub);font-size:.85rem;margin-top:.6rem">在 5% 顯著水準下，無法認為兩零件的需求變異數有顯著差異。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== F CALCULATOR ===== -->
+<section id="calc-f">
+  <h2>F 計算機（兩母體變異數比）</h2>
+  <div class="card fcard">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('ci-f','fTab')">信賴區間</div>
+      <div class="tab" onclick="switchTab('ht-f','fTab')">假設檢定</div>
+    </div>
+    <div id="ci-f" class="tab-content active">
+      <div class="grid2">
+        <div>
+          <label>樣本 1 數量 n₁</label><input id="fci_n1" type="number" value="11">
+          <label>樣本 1 標準差 s₁</label><input id="fci_s1" type="number" value="13.5">
+          <label>樣本 2 數量 n₂</label><input id="fci_n2" type="number" value="15">
+          <label>樣本 2 標準差 s₂</label><input id="fci_s2" type="number" value="13.866">
+          <label>信心水準 (1−α)%</label>
+          <select id="fci_conf"><option value="0.90">90%</option><option value="0.95" selected>95%</option><option value="0.99">99%</option></select>
+          <button class="btn-f" onclick="calcFCI()">計算 CI</button>
+        </div>
+        <div><canvas id="fCIChart" class="chart-canvas" style="max-height:200px"></canvas></div>
+      </div>
+      <div class="result-box" id="fCIResult"></div>
+    </div>
+    <div id="ht-f" class="tab-content">
+      <div class="grid2">
+        <div>
+          <label>樣本 1 數量 n₁</label><input id="fht_n1" type="number" value="36">
+          <label>樣本 1 標準差 s₁</label><input id="fht_s1" type="number" value="23.096">
+          <label>樣本 2 數量 n₂</label><input id="fht_n2" type="number" value="36">
+          <label>樣本 2 標準差 s₂</label><input id="fht_s2" type="number" value="17.998">
+          <label>顯著水準 α</label>
+          <select id="fht_alpha"><option value="0.10">0.10</option><option value="0.05" selected>0.05</option><option value="0.01">0.01</option></select>
+          <label>檢定方向</label>
+          <select id="fht_tail">
+            <option value="right">右尾（Hₐ: σ₁² &gt; σ₂²）</option>
+            <option value="left">左尾（Hₐ: σ₁² &lt; σ₂²）</option>
+            <option value="two">雙尾（Hₐ: σ₁² ≠ σ₂²）</option>
+          </select>
+          <button class="btn-f" onclick="calcFHT()">執行檢定</button>
+        </div>
+        <div><canvas id="fHTChart" class="chart-canvas" style="max-height:200px"></canvas></div>
+      </div>
+      <div class="result-box" id="fHTResult"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SUMMARY ===== -->
+<section id="summary">
+  <h2>公式總整理</h2>
+  <div style="overflow-x:auto">
+  <table class="summary-table">
+    <thead><tr><th>項目</th><th>公式</th><th>自由度</th><th>使用時機</th></tr></thead>
+    <tbody>
+      <tr><td>χ² 統計量</td><td>(n−1)s²/σ₀²</td><td>n−1</td><td>單一 σ² 假設檢定</td></tr>
+      <tr><td>σ² 信賴區間</td><td>[(n−1)s²/χ²<sub>α/2</sub>, (n−1)s²/χ²<sub>1−α/2</sub>]</td><td>n−1</td><td>估計 σ² 範圍</td></tr>
+      <tr><td>F 統計量</td><td>s₁²/s₂²</td><td>df₁=n₁−1, df₂=n₂−1</td><td>兩 σ² 假設檢定</td></tr>
+      <tr><td>σ₁²/σ₂² 信賴區間</td><td>[(s₁²/s₂²)/F<sub>α/2</sub>(df₁,df₂), (s₁²/s₂²)×F<sub>α/2</sub>(df₂,df₁)]</td><td>df₁, df₂</td><td>估計兩 σ² 比值</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="card" style="margin-top:1.2rem;border-color:rgba(245,158,11,.3)">
+    <h3 style="color:var(--f)">p-value 計算規則</h3>
+    <table class="data-table" style="margin-top:.5rem">
+      <thead><tr><th>檢定類型</th><th>計算方式</th></tr></thead>
+      <tbody>
+        <tr><td>χ² 右尾</td><td>P(χ²<sub>df</sub> > 計算值)</td></tr>
+        <tr><td>χ² 左尾</td><td>P(χ²<sub>df</sub> &lt; 計算值)</td></tr>
+        <tr><td>χ² 雙尾</td><td>若計算值 > df：2×P(右尾)；若 &lt; df：2×P(左尾)</td></tr>
+        <tr><td>F 右尾</td><td>P(F<sub>df₁,df₂</sub> > 計算值)</td></tr>
+        <tr><td>F 左尾</td><td>P(F<sub>df₁,df₂</sub> &lt; 計算值)</td></tr>
+        <tr><td>F 雙尾</td><td>2×P(右尾或左尾，取較小尾)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="quiz">
+  <h2>自我測驗</h2>
+  <div class="quiz-q">
+    <p>1. χ² 分配的自由度為何？</p>
+    <div class="quiz-opt" onclick="answer(this,true)">df = n − 1</div>
+    <div class="quiz-opt" onclick="answer(this,false)">df = n</div>
+    <div class="quiz-opt" onclick="answer(this,false)">df = n − 2</div>
+  </div>
+  <div class="quiz-q">
+    <p>2. σ² 的 95% CI 公式中，分子是什麼？</p>
+    <div class="quiz-opt" onclick="answer(this,true)">(n−1)s²</div>
+    <div class="quiz-opt" onclick="answer(this,false)">ns²</div>
+    <div class="quiz-opt" onclick="answer(this,false)">s² / n</div>
+  </div>
+  <div class="quiz-q">
+    <p>3. 比較兩母體變異數時，使用哪個分配？</p>
+    <div class="quiz-opt" onclick="answer(this,false)">t 分配</div>
+    <div class="quiz-opt" onclick="answer(this,true)">F 分配</div>
+    <div class="quiz-opt" onclick="answer(this,false)">z 分配</div>
+  </div>
+  <div class="quiz-q">
+    <p>4. F 統計量的計算公式是？</p>
+    <div class="quiz-opt" onclick="answer(this,true)">F = s₁² / s₂²</div>
+    <div class="quiz-opt" onclick="answer(this,false)">F = (s₁ − s₂)² / σ²</div>
+    <div class="quiz-opt" onclick="answer(this,false)">F = s₁ / s₂</div>
+  </div>
+  <div class="quiz-q">
+    <p>5. 若 χ² 雙尾檢定的計算值 > 期望值（中心），p-value 應如何計算？</p>
+    <div class="quiz-opt" onclick="answer(this,true)">p = 2 × P(χ²<sub>df</sub> > 計算值)</div>
+    <div class="quiz-opt" onclick="answer(this,false)">p = P(χ²<sub>df</sub> > 計算值)</div>
+    <div class="quiz-opt" onclick="answer(this,false)">p = 1 − P(χ²<sub>df</sub> > 計算值)</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ======= CHART UTILITIES =======
+let chiDistChart=null, fDistChart=null;
+let chiCIChartObj=null, chiHTChartObj=null, fCIChartObj=null, fHTChartObj=null;
+
+function chiPDF(x,df){
+  if(x<=0)return 0;
+  const g=gammaLn(df/2);
+  return Math.exp((df/2-1)*Math.log(x)-x/2-(df/2)*Math.log(2)-g);
+}
+function gammaLn(n){
+  if(n<0.5)return Math.log(Math.PI/Math.sin(Math.PI*n))-gammaLn(1-n);
+  n-=1;
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let x=1.000000000190015,t=n+5.5;
+  for(let j=0;j<6;j++)x+=c[j]/(n+j+1);
+  return 0.5*Math.log(2*Math.PI)+(n+0.5)*Math.log(t)-t+Math.log(x);
+}
+function fPDF(x,d1,d2){
+  if(x<=0)return 0;
+  const lB=gammaLn(d1/2)+gammaLn(d2/2)-gammaLn((d1+d2)/2);
+  return Math.exp((d1/2)*Math.log(d1/d2)+(d1/2-1)*Math.log(x)-(d1+d2)/2*Math.log(1+d1*x/d2)-lB);
+}
+
+function drawChiChart(){
+  const df=parseInt(document.getElementById('chiDfSel').value);
+  const xMax=Math.max(df*3,30);
+  const pts=120;
+  const xs=Array.from({length:pts},(_,i)=>0.05+i*(xMax-0.05)/(pts-1));
+  const ys=xs.map(x=>chiPDF(x,df));
+  const ctx=document.getElementById('chiChart').getContext('2d');
+  if(chiDistChart)chiDistChart.destroy();
+  chiDistChart=new Chart(ctx,{type:'line',data:{labels:xs.map(x=>x.toFixed(1)),datasets:[{data:ys,borderColor:'#38bdf8',borderWidth:2,fill:true,backgroundColor:'rgba(56,189,248,.15)',pointRadius:0,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:300}}});
+}
+
+function drawFChart(){
+  const d1=parseInt(document.getElementById('fDf1Sel').value);
+  const d2=parseInt(document.getElementById('fDf2Sel').value);
+  const xMax=8;
+  const pts=120;
+  const xs=Array.from({length:pts},(_,i)=>0.01+i*(xMax-0.01)/(pts-1));
+  const ys=xs.map(x=>fPDF(x,d1,d2));
+  const ctx=document.getElementById('fChart').getContext('2d');
+  if(fDistChart)fDistChart.destroy();
+  fDistChart=new Chart(ctx,{type:'line',data:{labels:xs.map(x=>x.toFixed(2)),datasets:[{data:ys,borderColor:'#f59e0b',borderWidth:2,fill:true,backgroundColor:'rgba(245,158,11,.15)',pointRadius:0,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:300}}});
+}
+
+// ======= CHI CALCULATORS =======
+function calcChiCI(){
+  const n=parseFloat(document.getElementById('ci_n').value);
+  const s=parseFloat(document.getElementById('ci_s').value);
+  const conf=parseFloat(document.getElementById('ci_conf').value);
+  const alpha=1-conf;
+  const df=n-1;
+  const s2=s*s;
+  const chi_lo=jStat.chisquare.inv(alpha/2,df);
+  const chi_hi=jStat.chisquare.inv(1-alpha/2,df);
+  const var_lo=df*s2/chi_hi;
+  const var_hi=df*s2/chi_lo;
+  const sd_lo=Math.sqrt(var_lo);
+  const sd_hi=Math.sqrt(var_hi);
+  const res=document.getElementById('chiCIResult');
+  res.className='result-box show';
+  res.innerHTML=`<strong>χ²<sub>${df}</sub> 臨界值：</strong> χ²<sub>α/2</sub>=${chi_hi.toFixed(3)}，χ²<sub>1-α/2</sub>=${chi_lo.toFixed(3)}<br>
+  <strong>σ² ${Math.round(conf*100)}% CI：</strong> [${var_lo.toFixed(3)}, ${var_hi.toFixed(3)}]<br>
+  <strong>σ ${Math.round(conf*100)}% CI：</strong> [${sd_lo.toFixed(4)}, ${sd_hi.toFixed(4)}]`;
+  drawChiShadeChart('chiCIChart', chiCIChartObj, df, chi_lo, chi_hi, 'ci');
+}
+
+function calcChiHT(){
+  const n=parseFloat(document.getElementById('ht_n').value);
+  const s=parseFloat(document.getElementById('ht_s').value);
+  const s0=parseFloat(document.getElementById('ht_s0').value);
+  const alpha=parseFloat(document.getElementById('ht_alpha').value);
+  const tail=document.getElementById('ht_tail').value;
+  const df=n-1;
+  const chi2=(df*s*s)/(s0*s0);
+  let pval;
+  if(tail==='right') pval=1-jStat.chisquare.cdf(chi2,df);
+  else if(tail==='left') pval=jStat.chisquare.cdf(chi2,df);
+  else{
+    const p1=1-jStat.chisquare.cdf(chi2,df);
+    const p2=jStat.chisquare.cdf(chi2,df);
+    pval=2*Math.min(p1,p2);
+  }
+  const reject=pval<alpha;
+  const res=document.getElementById('chiHTResult');
+  res.className='result-box show';
+  res.innerHTML=`<strong>χ² 統計量：</strong> χ²<sub>${df}</sub> = ${chi2.toFixed(4)}<br>
+  <strong>p-value：</strong> ${pval.toFixed(4)}<br>
+  <strong>顯著水準 α：</strong> ${alpha}<br>
+  ${reject?'<span class="reject">拒絕 H₀ — 有足夠證據認為 σ² ≠ σ₀²</span>':'<span class="noreject">不拒絕 H₀ — 證據不足</span>'}`;
+}
+
+function drawChiShadeChart(canvasId, chartObj, df, lo, hi, type){
+  const xMax=Math.max(df*3,30);
+  const pts=150;
+  const xs=Array.from({length:pts},(_,i)=>0.01+i*(xMax-0.01)/(pts-1));
+  const ys=xs.map(x=>chiPDF(x,df));
+  const bgColors=xs.map((x,i)=>{
+    if(type==='ci'){
+      return(x>=lo&&x<=hi)?'rgba(56,189,248,.3)':'rgba(56,189,248,.05)';
+    }
+    return 'rgba(56,189,248,.1)';
+  });
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  if(chartObj)chartObj.destroy();
+  const nc=new Chart(ctx,{type:'line',data:{labels:xs.map(x=>x.toFixed(1)),datasets:[{data:ys,borderColor:'#38bdf8',borderWidth:1.5,fill:true,backgroundColor:bgColors,pointRadius:0,tension:.3}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+  if(canvasId==='chiCIChart')chiCIChartObj=nc;
+  else chiHTChartObj=nc;
+}
+
+// ======= F CALCULATORS =======
+function calcFCI(){
+  const n1=parseFloat(document.getElementById('fci_n1').value);
+  const s1=parseFloat(document.getElementById('fci_s1').value);
+  const n2=parseFloat(document.getElementById('fci_n2').value);
+  const s2=parseFloat(document.getElementById('fci_s2').value);
+  const conf=parseFloat(document.getElementById('fci_conf').value);
+  const alpha=1-conf;
+  const df1=n1-1,df2=n2-1;
+  const ratio=s1*s1/(s2*s2);
+  const Fhi=jStat.centralF.inv(1-alpha/2,df1,df2);
+  const Fhi2=jStat.centralF.inv(1-alpha/2,df2,df1);
+  const lo=ratio/Fhi;
+  const hi=ratio*Fhi2;
+  const res=document.getElementById('fCIResult');
+  res.className='result-box show';
+  res.innerHTML=`<strong>s₁²/s₂² = </strong>${ratio.toFixed(4)}<br>
+  <strong>F<sub>α/2</sub>(${df1},${df2}) = </strong>${Fhi.toFixed(3)}，<strong>F<sub>α/2</sub>(${df2},${df1}) = </strong>${Fhi2.toFixed(3)}<br>
+  <strong>σ₁²/σ₂² ${Math.round(conf*100)}% CI：</strong> [${lo.toFixed(4)}, ${hi.toFixed(4)}]<br>
+  ${(lo<=1&&hi>=1)?'<span class="noreject">CI 包含 1 → 兩變異數無顯著差異</span>':'<span class="reject">CI 不含 1 → 兩變異數有顯著差異</span>'}`;
+}
+
+function calcFHT(){
+  const n1=parseFloat(document.getElementById('fht_n1').value);
+  const s1=parseFloat(document.getElementById('fht_s1').value);
+  const n2=parseFloat(document.getElementById('fht_n2').value);
+  const s2=parseFloat(document.getElementById('fht_s2').value);
+  const alpha=parseFloat(document.getElementById('fht_alpha').value);
+  const tail=document.getElementById('fht_tail').value;
+  const df1=n1-1,df2=n2-1;
+  const F=(s1*s1)/(s2*s2);
+  let pval;
+  const pRight=1-jStat.centralF.cdf(F,df1,df2);
+  const pLeft=jStat.centralF.cdf(F,df1,df2);
+  if(tail==='right') pval=pRight;
+  else if(tail==='left') pval=pLeft;
+  else pval=2*Math.min(pRight,pLeft);
+  const reject=pval<alpha;
+  const res=document.getElementById('fHTResult');
+  res.className='result-box show';
+  res.innerHTML=`<strong>F 統計量：</strong> F<sub>${df1},${df2}</sub> = ${F.toFixed(4)}<br>
+  <strong>p-value：</strong> ${pval.toFixed(4)}<br>
+  <strong>顯著水準 α：</strong> ${alpha}<br>
+  ${reject?'<span class="reject">拒絕 H₀ — 兩母體變異數有顯著差異</span>':'<span class="noreject">不拒絕 H₀ — 證據不足</span>'}`;
+}
+
+// ======= TABS =======
+function switchTab(id, group){
+  document.querySelectorAll('#'+id).forEach(()=>{});
+  const parent=document.getElementById(id).parentElement;
+  parent.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  parent.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs=parent.querySelectorAll('.tab');
+  const contents=parent.querySelectorAll('.tab-content');
+  contents.forEach((c,i)=>{ if(c.id===id) tabs[i].classList.add('active'); });
+}
+
+// ======= EXAMPLE TOGGLE =======
+function toggleEx(header){
+  const body=header.nextElementSibling;
+  const arrow=header.querySelector('.arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open-arrow');
+}
+
+// ======= QUIZ =======
+function answer(el, correct){
+  const parent=el.parentElement;
+  if(parent.querySelector('.correct')||parent.querySelector('.wrong'))return;
+  el.classList.add(correct?'correct':'wrong');
+  if(!correct) parent.querySelectorAll('.quiz-opt').forEach(o=>{if(o!==el)o.style.opacity='.5';});
+}
+
+// ======= INIT =======
+window.addEventListener('load',()=>{
+  drawChiChart();
+  drawFChart();
+});
+</script>
+</body>
+</html>
