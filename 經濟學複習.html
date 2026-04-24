@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>經濟學互動複習 — 淡江大學期中考</title>
+<style>
+  :root {
+    --primary: #2c5f8a;
+    --primary-light: #4a90d9;
+    --accent: #e67e22;
+    --accent2: #27ae60;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #2d3436;
+    --muted: #636e72;
+    --border: #dfe6e9;
+    --correct: #00b894;
+    --wrong: #d63031;
+    --tag-bg: #eaf2ff;
+    --tag-text: #2980b9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ── HEADER ── */
+  header { background: var(--primary); color: #fff; padding: 20px 32px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span.sub { font-size: 0.85rem; opacity: 0.75; display: block; margin-top: 3px; }
+
+  /* ── NAV TABS ── */
+  nav { background: var(--primary); border-top: 1px solid rgba(255,255,255,0.15); display: flex; flex-wrap: wrap; padding: 0 24px; }
+  nav button { background: none; border: none; color: rgba(255,255,255,0.7); padding: 12px 18px; cursor: pointer; font-size: 0.88rem; border-bottom: 3px solid transparent; transition: all .2s; font-family: inherit; }
+  nav button:hover { color: #fff; }
+  nav button.active { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* ── MAIN ── */
+  main { max-width: 960px; margin: 32px auto; padding: 0 20px 60px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── CARD ── */
+  .card { background: var(--card); border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .card h2 { font-size: 1.15rem; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .icon { font-size: 1.3rem; }
+  .card h3 { font-size: 1rem; color: var(--text); margin: 16px 0 8px; }
+
+  /* ── TAGS ── */
+  .tag { display: inline-block; background: var(--tag-bg); color: var(--tag-text); font-size: 0.75rem; padding: 2px 9px; border-radius: 12px; margin: 0 4px 4px 0; font-weight: 600; }
+
+  /* ── FORMULA BOX ── */
+  .formula { background: #eef5ff; border-left: 4px solid var(--primary-light); border-radius: 0 8px 8px 0; padding: 12px 18px; margin: 12px 0; font-size: 1rem; color: var(--primary); font-weight: 600; letter-spacing: 0.02em; }
+
+  /* ── DEFINITION LIST ── */
+  .def-list { display: grid; gap: 12px; }
+  .def-item { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .def-term { background: var(--primary); color: #fff; padding: 10px 16px; font-weight: 600; font-size: 0.92rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .def-term .toggle-icon { font-size: 0.8rem; transition: transform .2s; }
+  .def-term.open .toggle-icon { transform: rotate(180deg); }
+  .def-body { padding: 14px 16px; background: #fafcff; font-size: 0.93rem; line-height: 1.8; display: none; }
+  .def-body.open { display: block; }
+
+  /* ── CALCULATOR ── */
+  .calc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .calc-field label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 600; }
+  .calc-field input { width: 100%; border: 1.5px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 0.95rem; font-family: inherit; transition: border .2s; }
+  .calc-field input:focus { outline: none; border-color: var(--primary-light); }
+  .calc-field input[readonly] { background: #f0f4f8; color: var(--primary); font-weight: 700; }
+  .btn { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 11px 24px; cursor: pointer; font-size: 0.93rem; font-weight: 600; font-family: inherit; transition: background .2s; margin-top: 4px; }
+  .btn:hover { background: var(--primary-light); }
+  .btn.accent { background: var(--accent); }
+  .btn.accent:hover { background: #d35400; }
+  .btn.green { background: var(--accent2); }
+  .btn.green:hover { background: #219150; }
+  .result-box { background: #eef8f0; border: 1.5px solid var(--accent2); border-radius: 8px; padding: 14px 18px; margin-top: 14px; font-size: 0.93rem; line-height: 2; display: none; }
+  .result-box.show { display: block; }
+  .result-box b { color: var(--primary); }
+
+  /* ── QUIZ / FLASHCARD ── */
+  .quiz-card { border: 2px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 16px; min-height: 140px; display: flex; flex-direction: column; justify-content: center; }
+  .quiz-question { font-size: 1.05rem; font-weight: 600; margin-bottom: 18px; color: var(--text); }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+  .quiz-opt { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; cursor: pointer; font-size: 0.9rem; transition: all .15s; background: #fff; font-family: inherit; }
+  .quiz-opt:hover { border-color: var(--primary-light); background: var(--tag-bg); }
+  .quiz-opt.correct { border-color: var(--correct); background: #e6fff5; color: #006644; font-weight: 600; }
+  .quiz-opt.wrong { border-color: var(--wrong); background: #fff0f0; color: #990000; }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-feedback { margin-top: 14px; font-size: 0.93rem; font-weight: 600; min-height: 24px; }
+  .quiz-feedback.ok { color: var(--correct); }
+  .quiz-feedback.no { color: var(--wrong); }
+  .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 0.85rem; color: var(--muted); }
+  .quiz-score { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+
+  /* ── DIAGRAM ── */
+  svg { max-width: 100%; height: auto; }
+
+  /* ── PARADOX THRIFT ── */
+  .pt-container { display: flex; flex-direction: column; gap: 16px; }
+  .pt-graph { width: 100%; max-width: 520px; margin: 0 auto; }
+
+  /* ── LABOR DIAGRAM ── */
+  .labor-tree { font-size: 0.88rem; line-height: 2; }
+  .labor-tree .box { display: inline-block; background: var(--tag-bg); border: 1.5px solid var(--primary-light); border-radius: 7px; padding: 3px 14px; font-weight: 600; color: var(--primary); margin: 2px 4px; }
+  .labor-tree .box.green { background: #e6fff5; border-color: var(--correct); color: #006644; }
+  .labor-tree .box.orange { background: #fff4e6; border-color: var(--accent); color: #c0392b; }
+  .labor-tree .box.gray { background: #f0f0f0; border-color: #aaa; color: #555; }
+
+  /* ── MULTIPLIER SLIDER ── */
+  .slider-wrap { margin: 16px 0; }
+  .slider-wrap label { font-size: 0.85rem; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+  input[type=range] { width: 100%; margin: 8px 0; accent-color: var(--primary); }
+  .multiplier-result { font-size: 1.6rem; font-weight: 800; color: var(--accent); text-align: center; padding: 12px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { background: var(--border); border-radius: 99px; height: 8px; margin-bottom: 6px; }
+  .progress-fill { background: var(--primary-light); border-radius: 99px; height: 8px; transition: width .4s; }
+
+  /* ── TABLE ── */
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 12px 0; }
+  th { background: var(--primary); color: #fff; padding: 9px 14px; text-align: left; }
+  td { padding: 8px 14px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: #f8fbff; }
+
+  /* ── STEP LIST ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li { counter-increment: step; display: flex; gap: 14px; margin-bottom: 12px; align-items: flex-start; }
+  .steps li::before { content: counter(step); background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    .quiz-options { grid-template-columns: 1fr; }
+    .calc-grid { grid-template-columns: 1fr 1fr; }
+    nav button { padding: 10px 12px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>經濟學互動複習</h1>
+    <span class="sub">淡江大學 112-2 期中考 — 核心概念與計算練習</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('tab-gdp', this)">📊 GDP/GNP</button>
+  <button onclick="switchTab('tab-price', this)">📈 物價指數</button>
+  <button onclick="switchTab('tab-labor', this)">👷 勞動市場</button>
+  <button onclick="switchTab('tab-inflation', this)">💸 通膨概念</button>
+  <button onclick="switchTab('tab-keynesian', this)">⚖️ 凱因斯模型</button>
+  <button onclick="switchTab('tab-quiz', this)">🧠 隨機測驗</button>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 1: GDP / GNP -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section active" id="tab-gdp">
+
+  <div class="card">
+    <h2><span class="icon">📖</span>GDP vs GNP — 核心差異</h2>
+    <table>
+      <tr><th>指標</th><th>定義</th><th>計算關係</th></tr>
+      <tr><td><b>GDP</b> 國內生產毛額</td><td>一國<b>境內</b>生產的最終財貨與勞務市場總價值</td><td rowspan="2">GNP = GDP + 國外要素所得淨額</td></tr>
+      <tr><td><b>GNP</b> 國民生產毛額</td><td>本國<b>國民</b>（不管在哪裡）生產的最終財貨與勞務市場總價值</td></tr>
+      <tr><td><b>NNP</b> 國民生產淨額</td><td>GNP 扣除折舊</td><td>NNP = GNP − 折舊</td></tr>
+      <tr><td><b>NI</b> 國民所得</td><td>NNP 扣除間接稅淨額</td><td>NI = NNP − 間接稅淨額</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">📐</span>支出法 GNP（Y = C + I + G + X − M）</h2>
+    <div class="def-list">
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">C — 民間消費支出 <span class="toggle-icon">▼</span></div>
+        <div class="def-body">家庭購買財貨（耐久財、非耐久財）與勞務的支出。<br><b>例外：</b>新建住宅不算 C，計入 I。</div>
+      </div>
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">I — 投資支出 <span class="toggle-icon">▼</span></div>
+        <div class="def-body">包含：
+          <ol style="margin-left:18px;margin-top:6px">
+            <li>固定資本形成（機器設備、廠房）</li>
+            <li>新建住宅</li>
+            <li>存貨變動（預期中 + 非預期中）</li>
+          </ol>
+          <br><b>毛投資 = 淨投資 + 折舊</b>
+        </div>
+      </div>
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">G — 政府支出 <span class="toggle-icon">▼</span></div>
+        <div class="def-body">政府購買財貨與勞務的支出（包含公務員薪資）。<br><b>注意：</b>移轉性支付（失業救濟金、社會福利）<u>不計入 G</u>，因為沒有對應的生產。</div>
+      </div>
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">X − M — 淨出口 <span class="toggle-icon">▼</span></div>
+        <div class="def-body">
+          <b>出超（貿易順差）：</b>X > M<br>
+          <b>入超（貿易逆差）：</b>X &lt; M → 淨出口為負值<br>
+          入超表示一國進口超過出口，外匯流出。
+        </div>
+      </div>
+    </div>
+
+    <h3>考題辨別練習</h3>
+    <div id="gdp-classify"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">🔢</span>GNP 計算機（仿考題三）</h2>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px">輸入數值後按「計算」，自動求出 GNP、勞動報酬、折舊、淨投資。</p>
+    <div class="calc-grid">
+      <div class="calc-field"><label>C（民間消費）</label><input type="number" id="gc_C" placeholder="621"></div>
+      <div class="calc-field"><label>G（政府支出）</label><input type="number" id="gc_G" placeholder="118"></div>
+      <div class="calc-field"><label>X − M（淨出口）</label><input type="number" id="gc_XM" placeholder="9"></div>
+      <div class="calc-field"><label>存貨變動</label><input type="number" id="gc_inv" placeholder="7"></div>
+      <div class="calc-field"><label>固定資本形成毛額（存貨外）</label><input type="number" id="gc_fixed" placeholder="120"></div>
+      <div class="calc-field"><label>NNP</label><input type="number" id="gc_NNP" placeholder="859"></div>
+      <div class="calc-field"><label>間接稅淨額</label><input type="number" id="gc_tax" placeholder="83"></div>
+      <div class="calc-field"><label>利息+地租+利潤</label><input type="number" id="gc_nonlabor" placeholder="239"></div>
+    </div>
+    <button class="btn" onclick="calcGNP()">計算</button>
+    <div class="result-box" id="gc_result"></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 2: 物價指數 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" id="tab-price">
+
+  <div class="card">
+    <h2><span class="icon">📏</span>三大物價指數比較</h2>
+    <table>
+      <tr><th>指標</th><th>商品籃</th><th>公式</th><th>特性</th></tr>
+      <tr>
+        <td><b>CPI</b><br>消費者物價指數</td>
+        <td>基期固定（拉氏）</td>
+        <td>CPI = (當期價格 × 基期數量) / (基期價格 × 基期數量) × 100</td>
+        <td>代表一般家庭生活成本；傾向<b>高估</b>通膨（替代偏誤）</td>
+      </tr>
+      <tr>
+        <td><b>GNP 平減指數</b></td>
+        <td>當期（帕氏）</td>
+        <td>= 名目 GNP / 實質 GNP × 100</td>
+        <td>涵蓋所有最終財貨，不只消費品；傾向<b>低估</b>通膨</td>
+      </tr>
+      <tr>
+        <td><b>實質 GNP</b></td>
+        <td>基期價格</td>
+        <td>= Σ (基期價格 × 當期數量)</td>
+        <td>排除價格變動，反映<b>實際產量</b>變化</td>
+      </tr>
+    </table>
+
+    <h3 style="margin-top:18px">物價指數的主要問題</h3>
+    <div class="def-list" style="margin-top:8px">
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">① 替代偏誤（Substitution Bias） <span class="toggle-icon">▼</span></div>
+        <div class="def-body">CPI 固定使用<b>基期商品籃</b>，但當某商品漲價時，消費者會轉向較便宜的替代品。CPI 無法反映此行為，導致高估通膨。</div>
+      </div>
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">② 品質改善（Quality Improvement） <span class="toggle-icon">▼</span></div>
+        <div class="def-body">即使價格上漲，但若商品品質提升（如電腦速度更快），實際上生活水準並未下降。物價指數可能高估真實通膨。</div>
+      </div>
+      <div class="def-item">
+        <div class="def-term" onclick="toggleDef(this)">③ 新產品的出現（New Products） <span class="toggle-icon">▼</span></div>
+        <div class="def-body">物價指數無法即時納入新產品，導致無法完整衡量消費者福利的提升。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">🔢</span>物價指數計算機（仿考題四）</h2>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px">假設只有 X、Y 兩種消費品，以第 2 期為基期。輸入兩期的價格與數量：</p>
+    <table style="font-size:0.88rem;margin-bottom:16px">
+      <tr><th></th><th>P<sup>X</sup></th><th>P<sup>Y</sup></th><th>Q<sup>X</sup></th><th>Q<sup>Y</sup></th></tr>
+      <tr>
+        <td><b>第 1 期（當期）</b></td>
+        <td><input type="number" id="p1_px" placeholder="4" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p1_py" placeholder="5" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p1_qx" placeholder="25" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p1_qy" placeholder="15" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+      </tr>
+      <tr>
+        <td><b>第 2 期（基期）</b></td>
+        <td><input type="number" id="p2_px" placeholder="3" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p2_py" placeholder="7" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p2_qx" placeholder="20" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+        <td><input type="number" id="p2_qy" placeholder="30" style="width:65px;padding:5px 7px;border:1.5px solid var(--border);border-radius:6px;font-size:0.9rem"></td>
+      </tr>
+    </table>
+    <button class="btn" onclick="calcPriceIndex()">計算四大指標</button>
+    <div class="result-box" id="price_result"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">⚠️</span>用 GNP/GDP 評估經濟福祉的問題</h2>
+    <div class="def-list">
+      <div class="def-item"><div class="def-term" onclick="toggleDef(this)">① 未計入地下經濟 <span class="toggle-icon">▼</span></div><div class="def-body">非法交易、未申報收入等不會反映在 GDP 中，導致低估真實經濟活動。</div></div>
+      <div class="def-item"><div class="def-term" onclick="toggleDef(this)">② 未計入非市場活動 <span class="toggle-icon">▼</span></div><div class="def-body">家庭主婦做家事、自給自足農業、義工服務等都有經濟價值，但不計入 GDP。</div></div>
+      <div class="def-item"><div class="def-term" onclick="toggleDef(this)">③ 未反映所得分配 <span class="toggle-icon">▼</span></div><div class="def-body">GDP 成長不代表每個人都受益，可能財富集中於少數人，而多數人生活水準未改善。</div></div>
+      <div class="def-item"><div class="def-term" onclick="toggleDef(this)">④ 未計入外部性（污染、環境破壞） <span class="toggle-icon">▼</span></div><div class="def-body">工廠生產增加 GDP，但同時造成空氣污染，對社會福祉是損害，GDP 未扣除此成本。</div></div>
+      <div class="def-item"><div class="def-term" onclick="toggleDef(this)">⑤ 未反映休閒與生活品質 <span class="toggle-icon">▼</span></div><div class="def-body">兩國 GDP 相同，但若 A 國每週工作 60 小時、B 國工作 40 小時，B 國人民的福祉較高。</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 3: 勞動市場 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" id="tab-labor">
+
+  <div class="card">
+    <h2><span class="icon">🌳</span>勞動力分類樹狀圖</h2>
+    <div style="font-size:0.9rem;line-height:2.4">
+      <div style="text-align:center">
+        <span class="labor-tree"><span class="box" style="font-size:1rem;padding:6px 20px">年滿 15 足歲民間人口</span></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
+        <div style="border:2px solid var(--primary-light);border-radius:10px;padding:14px">
+          <div style="font-weight:700;color:var(--primary);margin-bottom:8px">勞動力</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#e6fff5;border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:0.75rem;color:var(--muted)">就業者</div>
+              <div style="font-weight:700;color:#006644;font-size:0.85rem">有酬工作者</div>
+              <div style="font-size:0.75rem;color:var(--muted)">+ 每週15小時以上<br>無酬家族工作者</div>
+            </div>
+            <div style="background:#fff4e6;border-radius:8px;padding:8px;text-align:center">
+              <div style="font-size:0.75rem;color:var(--muted)">失業者</div>
+              <div style="font-weight:700;color:#c0392b;font-size:0.85rem">無工作</div>
+              <div style="font-size:0.75rem;color:var(--muted)">+ 正在求職<br>+ 隨時可工作</div>
+            </div>
+          </div>
+        </div>
+        <div style="border:2px solid #ccc;border-radius:10px;padding:14px">
+          <div style="font-weight:700;color:#555;margin-bottom:8px">非勞動力</div>
+          <ul style="margin-left:16px;color:var(--muted);font-size:0.85rem;line-height:2">
+            <li>學生（未工作）</li>
+            <li>家管</li>
+            <li>退休人員</li>
+            <li><b>氣餒的工作者 ⚠️</b></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px">重要公式</h3>
+    <div class="formula">失業率 = 失業人口 ÷ 勞動力 × 100%</div>
+    <div class="formula">勞動參與率 = 勞動力 ÷ 年滿15足歲民間人口 × 100%</div>
+
+    <h3>氣餒的工作者（Discouraged Workers）</h3>
+    <div style="background:#fff8e6;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:14px;margin-top:8px;font-size:0.92rem;line-height:1.8">
+      因長期找不到工作而<b>放棄求職</b>的人。由於不在積極求職，被歸類為<b>非勞動力</b>，<u>不計入失業率</u>。<br>
+      ⚠️ 這導致官方失業率<b>低估</b>真實的就業困難程度。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">🔢</span>勞動市場計算機</h2>
+    <div class="calc-grid">
+      <div class="calc-field"><label>有酬工作者</label><input type="number" id="lm_paid" placeholder="1000"></div>
+      <div class="calc-field"><label>每週≥15小時無酬家族工作者</label><input type="number" id="lm_unpaid" placeholder="50"></div>
+      <div class="calc-field"><label>失業人口</label><input type="number" id="lm_unemp" placeholder="100"></div>
+      <div class="calc-field"><label>非勞動力</label><input type="number" id="lm_nonlabor" placeholder="400"></div>
+    </div>
+    <button class="btn" onclick="calcLabor()">計算</button>
+    <div class="result-box" id="lm_result"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">📋</span>充分就業</h2>
+    <p style="font-size:0.93rem;line-height:1.8">充分就業並<b>非失業率為零</b>，而是指消除了<b>循環性失業</b>（景氣不佳造成的需求不足型失業）後的狀態。</p>
+    <br>
+    <table>
+      <tr><th>失業類型</th><th>原因</th><th>充分就業時是否存在</th></tr>
+      <tr><td><b>摩擦性失業</b></td><td>換工作過渡期、資訊不對稱</td><td>✅ 存在（自然失業）</td></tr>
+      <tr><td><b>結構性失業</b></td><td>產業結構改變、技能不符</td><td>✅ 存在（自然失業）</td></tr>
+      <tr><td><b>循環性失業</b></td><td>景氣衰退、有效需求不足</td><td>❌ 已消除</td></tr>
+    </table>
+    <div class="formula">自然失業率 = 摩擦性失業率 + 結構性失業率</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 4: 通膨概念 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" id="tab-inflation">
+
+  <div class="card">
+    <h2><span class="icon">💡</span>費雪方程式（Fisher Equation）</h2>
+    <div class="formula">實質利率 ≈ 名目利率 − 通貨膨脹率</div>
+    <p style="font-size:0.93rem;line-height:1.9;margin-top:12px">
+      <b>名目利率（Nominal Interest Rate）：</b>銀行帳面上標示的利率，未調整物價。<br>
+      <b>實質利率（Real Interest Rate）：</b>扣除通膨後，真實的購買力報酬率。<br>
+      <b>通貨膨脹率：</b>物價水準的上漲百分比。
+    </p>
+    <div style="background:#eef5ff;border-radius:8px;padding:16px;margin-top:14px">
+      <b>例題：</b>若名目利率為 5%，通膨率為 3%，則實質利率 = 5% − 3% = <b>2%</b>
+    </div>
+
+    <h3 style="margin-top:20px">費雪方程式計算機</h3>
+    <div class="calc-grid" style="margin-top:10px">
+      <div class="calc-field"><label>名目利率（%）</label><input type="number" id="fisher_nom" placeholder="5" step="0.1"></div>
+      <div class="calc-field"><label>通貨膨脹率（%）</label><input type="number" id="fisher_inf" placeholder="3" step="0.1"></div>
+      <div class="calc-field"><label>實質利率（%）</label><input type="number" id="fisher_real" readonly placeholder="結果"></div>
+    </div>
+    <button class="btn" onclick="calcFisher()">計算</button>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">👟</span>鞋皮成本（Shoe-Leather Cost）</h2>
+    <p style="font-size:0.93rem;line-height:1.9">
+      通膨造成的成本之一。當通膨率高時，持有現金的實質價值快速下降，人們為了減少現金持有，<b>頻繁跑銀行</b>（古代要磨破鞋皮），因此消耗時間與資源。
+    </p>
+    <br>
+    <table>
+      <tr><th>通膨成本類型</th><th>說明</th></tr>
+      <tr><td><b>鞋皮成本</b></td><td>頻繁往來銀行（或理財決策）消耗的資源</td></tr>
+      <tr><td><b>菜單成本</b></td><td>企業頻繁更改價目表的成本</td></tr>
+      <tr><td><b>財富重分配</b></td><td>通膨傷害固定收入者（如退休金），有利於債務人</td></tr>
+      <tr><td><b>稅制扭曲</b></td><td>名目所得提升可能推入更高稅率（稅階蠕升）</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">📜</span>賽依法則（Say's Law）</h2>
+    <div style="background:#eef5ff;border-left:4px solid var(--primary-light);padding:14px;border-radius:0 8px 8px 0;font-size:1rem;font-weight:600;margin-bottom:14px">
+      「供給自創需求」（Supply creates its own demand）
+    </div>
+    <p style="font-size:0.93rem;line-height:1.9">
+      古典經濟學的核心命題。認為生產商品就會創造同等的所得，這些所得最終都會花費出去，因此<b>總供給 = 總需求</b>，不會出現長期的生產過剩或有效需求不足。<br><br>
+      <b>凱因斯的反駁：</b>人們可能儲蓄而不消費，導致有效需求不足與失業。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">🔄</span>MPC — 邊際消費傾向</h2>
+    <div class="formula">MPC = ΔC / ΔY</div>
+    <p style="font-size:0.93rem;line-height:1.9;margin-top:10px">
+      每增加 1 元所得，用於消費的比例。<br>
+      例如 MPC = 0.8，表示每多賺 100 元，花費 80 元、儲蓄 20 元。
+    </p>
+    <div class="formula">MPS = 1 − MPC　（邊際儲蓄傾向）</div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 5: 凱因斯模型 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" id="tab-keynesian">
+
+  <div class="card">
+    <h2><span class="icon">📉</span>消費函數與儲蓄函數</h2>
+    <div class="formula">消費函數：C = C₀ + MPC × Y</div>
+    <div class="formula">儲蓄函數：S = −C₀ + MPS × Y　（其中 MPS = 1 − MPC）</div>
+    <p style="font-size:0.88rem;color:var(--muted);margin-top:10px">C₀ = 自發性消費（即使所得為零也會消費的最低量）</p>
+
+    <h3 style="margin-top:18px">乘數效果</h3>
+    <div class="formula">乘數 = 1 / (1 − MPC) = 1 / MPS</div>
+    <p style="font-size:0.93rem;line-height:1.8;margin-top:8px">
+      自發性支出增加 ΔI，均衡所得的增加量 = 乘數 × ΔI
+    </p>
+
+    <div class="slider-wrap" style="margin-top:16px">
+      <label>MPC = <span id="mpc_val">0.8</span> <span style="color:var(--accent)">→ 乘數 = <span id="mult_val">5</span></span></label>
+      <input type="range" min="0.1" max="0.95" step="0.05" value="0.8" oninput="updateMultiplier(this.value)">
+      <div class="multiplier-result">乘數 = <span id="mult_big">5.00</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">🔢</span>均衡所得計算機（仿考題五）</h2>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px">假設 X−M = 折舊 = 稅收 = 移轉性支付 = 0</p>
+    <div class="calc-grid">
+      <div class="calc-field"><label>自發性消費 C₀</label><input type="number" id="ke_C0" placeholder="30"></div>
+      <div class="calc-field"><label>MPC</label><input type="number" id="ke_MPC" placeholder="0.8" step="0.01" min="0" max="0.99"></div>
+      <div class="calc-field"><label>投資 I</label><input type="number" id="ke_I" placeholder="120"></div>
+      <div class="calc-field"><label>政府支出 G（可填 0）</label><input type="number" id="ke_G" placeholder="0"></div>
+    </div>
+    <button class="btn" onclick="calcEquilibrium()">求均衡所得</button>
+    <button class="btn accent" onclick="calcGRequired()" style="margin-left:10px">給定目標所得，求G</button>
+    <div class="calc-grid" style="margin-top:12px">
+      <div class="calc-field"><label>目標均衡所得 Y*（求G用）</label><input type="number" id="ke_Ytarget" placeholder="850"></div>
+    </div>
+    <div class="result-box" id="ke_result"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="icon">⚖️</span>節儉的矛盾（Paradox of Thrift）</h2>
+    <div class="pt-container">
+      <p style="font-size:0.93rem;line-height:1.9">
+        <b>個體層面：</b>個人增加儲蓄是理性的（為未來預防）。<br>
+        <b>總體層面：</b>若所有人同時增加儲蓄（減少消費），將導致<b>總需求下降</b> → 所得下降 → 整體儲蓄反而不變或減少。
+      </p>
+      <div class="pt-graph">
+        <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg" font-family="'Microsoft JhengHei',sans-serif">
+          <!-- Axes -->
+          <line x1="60" y1="310" x2="460" y2="310" stroke="#666" stroke-width="2"/>
+          <line x1="60" y1="40" x2="60" y2="310" stroke="#666" stroke-width="2"/>
+          <!-- Arrow heads -->
+          <polygon points="460,305 468,310 460,315" fill="#666"/>
+          <polygon points="55,40 60,32 65,40" fill="#666"/>
+          <!-- Axis labels -->
+          <text x="470" y="314" font-size="14" fill="#555">所得 Y</text>
+          <text x="20" y="36" font-size="14" fill="#555" transform="rotate(-90,20,36)" text-anchor="middle">I, S</text>
+          <!-- Investment line (horizontal) -->
+          <line x1="70" y1="190" x2="440" y2="190" stroke="#2980b9" stroke-width="2.5" stroke-dasharray="8,4"/>
+          <text x="442" y="194" font-size="13" fill="#2980b9">I</text>
+          <!-- S1 original savings line -->
+          <line x1="70" y1="290" x2="430" y2="110" stroke="#27ae60" stroke-width="2.5"/>
+          <text x="432" y="108" font-size="13" fill="#27ae60">S₁</text>
+          <!-- S2 new savings line (shift up) -->
+          <line x1="70" y1="248" x2="430" y2="68" stroke="#e67e22" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <text x="432" y="66" font-size="13" fill="#e67e22">S₂</text>
+          <!-- E1 intersection -->
+          <circle cx="294" cy="190" r="5" fill="#27ae60"/>
+          <line x1="294" y1="190" x2="294" y2="310" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <text x="286" y="325" font-size="12" fill="#27ae60">Y₁</text>
+          <!-- E2 intersection -->
+          <circle cx="222" cy="190" r="5" fill="#e67e22"/>
+          <line x1="222" y1="190" x2="222" y2="310" stroke="#e67e22" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <text x="214" y="325" font-size="12" fill="#e67e22">Y₂</text>
+          <!-- Arrow showing Y decrease -->
+          <line x1="280" y1="336" x2="236" y2="336" stroke="#d63031" stroke-width="2" marker-end="url(#arrowR)"/>
+          <defs><marker id="arrowR" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#d63031" stroke-width="1.5"/></marker></defs>
+          <text x="240" y="350" font-size="11" fill="#d63031">所得減少</text>
+          <!-- Labels -->
+          <text x="160" y="68" font-size="12" fill="#e67e22">儲蓄函數上移</text>
+          <text x="160" y="82" font-size="12" fill="#e67e22">（大家更節儉）</text>
+          <!-- S level same -->
+          <line x1="60" y1="190" x2="80" y2="190" stroke="#aaa" stroke-width="1.5"/>
+          <text x="20" y="194" font-size="12" fill="#aaa">S*=I</text>
+        </svg>
+      </div>
+      <div style="background:#fff8e6;border-radius:8px;padding:14px;font-size:0.9rem;line-height:1.9">
+        <b>圖解說明：</b><br>
+        投資 I 為水平線（外生決定）。<br>
+        原本均衡在 E₁（Y₁），人們若增加儲蓄傾向，S 曲線向上移至 S₂。<br>
+        新均衡在 E₂，<b>所得從 Y₁ 降至 Y₂</b>，但實際儲蓄仍等於 I，並未增加。<br>
+        → 個人理性 ≠ 集體理性（合成謬誤）
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 6: QUIZ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" id="tab-quiz">
+  <div class="card">
+    <h2><span class="icon">🧠</span>隨機測驗</h2>
+    <div class="progress-bar"><div class="progress-fill" id="quiz_progress" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--muted);margin-bottom:16px">
+      <span id="quiz_counter">第 1 題 / 共 15 題</span>
+      <span class="quiz-score" id="quiz_score">得分：0</span>
+    </div>
+    <div class="quiz-card" id="quiz_card">
+      <div class="quiz-question" id="quiz_q"></div>
+      <div class="quiz-options" id="quiz_opts"></div>
+      <div class="quiz-feedback" id="quiz_fb"></div>
+    </div>
+    <div class="quiz-nav">
+      <button class="btn" onclick="quizNext()" id="btn_next" disabled>下一題 →</button>
+      <button class="btn green" onclick="quizRestart()" id="btn_restart" style="display:none">重新開始</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ─────── TAB SWITCH ─────── */
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ─────── ACCORDION ─────── */
+function toggleDef(termEl) {
+  const body = termEl.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  termEl.classList.toggle('open', !isOpen);
+  body.classList.toggle('open', !isOpen);
+}
+
+/* ─────── GDP CLASSIFIER ─────── */
+(function buildClassifier() {
+  const items = [
+    { text: '小陳直接向建商購買新建住宅', correct: ['GDP','I'], choices: ['只影響 GDP', '影響 GDP 和 I', '影響 GDP 和 G', '未直接影響'], ans: 1 },
+    { text: '政府提高公務員的薪資', correct: ['GDP','G'], choices: ['只影響 GDP', '影響 GDP 和 I', '影響 GDP 和 G', '未直接影響'], ans: 2 },
+    { text: '政府提高失業救濟金', correct: ['未直接影響'], choices: ['只影響 GDP', '影響 GDP 和 I', '影響 GDP 和 G', '未直接影響（移轉性支付）'], ans: 3 },
+    { text: '企業購買新機器設備', correct: ['GDP','I'], choices: ['只影響 GDP', '影響 GDP 和 I', '影響 GDP 和 G', '未直接影響'], ans: 1 },
+    { text: '美國商人在台灣工廠生產電腦（計入 GDP）', correct: ['計入GDP，不計GNP'], choices: ['計入 GDP，不計入 GNP', '計入 GNP，不計入 GDP', '同時計入 GDP 和 GNP', '都不計入'], ans: 0 },
+  ];
+  const container = document.getElementById('gdp-classify');
+  if (!container) return;
+  let html = '<div class="def-list">';
+  items.forEach((it, i) => {
+    html += `<div class="def-item" id="clas${i}">
+      <div class="def-term" style="cursor:default">${it.text}</div>
+      <div class="def-body open" style="display:block">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        ${it.choices.map((c,j) => `<button onclick="checkClass(${i},${j},${it.ans},this)" class="quiz-opt" style="padding:7px 12px;font-size:0.85rem">${c}</button>`).join('')}
+        </div>
+        <div id="cfb${i}" style="margin-top:8px;font-weight:600;font-size:0.88rem"></div>
+      </div></div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+})();
+
+function checkClass(idx, selected, correct, btn) {
+  const card = document.getElementById(`clas${idx}`);
+  const fb = document.getElementById(`cfb${idx}`);
+  card.querySelectorAll('.quiz-opt').forEach(b => { b.disabled = true; });
+  if (selected === correct) {
+    btn.classList.add('correct');
+    fb.textContent = '✓ 正確！'; fb.style.color = 'var(--correct)';
+  } else {
+    btn.classList.add('wrong');
+    card.querySelectorAll('.quiz-opt')[correct].classList.add('correct');
+    fb.textContent = '✗ 再想想看。'; fb.style.color = 'var(--wrong)';
+  }
+}
+
+/* ─────── GNP CALC ─────── */
+function calcGNP() {
+  const C = +document.getElementById('gc_C').value || 621;
+  const G = +document.getElementById('gc_G').value || 118;
+  const XM = +document.getElementById('gc_XM').value || 9;
+  const inv = +document.getElementById('gc_inv').value || 7;
+  const fixed = +document.getElementById('gc_fixed').value || 120;
+  const NNP = +document.getElementById('gc_NNP').value || 859;
+  const tax = +document.getElementById('gc_tax').value || 83;
+  const nonlabor = +document.getElementById('gc_nonlabor').value || 239;
+
+  const GNP = C + fixed + inv + G + XM;
+  const depreciation = GNP - NNP;
+  const labor = (NNP - tax) - nonlabor;
+  const netInv = (fixed + inv) - depreciation;
+
+  const r = document.getElementById('gc_result');
+  r.innerHTML = `
+    <b>GNP</b> = C + (固定資本形成 + 存貨變動) + G + (X−M) = ${C} + (${fixed}+${inv}) + ${G} + ${XM} = <b>${GNP}</b><br>
+    <b>折舊</b> = GNP − NNP = ${GNP} − ${NNP} = <b>${depreciation}</b><br>
+    <b>勞動報酬</b> = (NNP − 間接稅淨額) − (利息+地租+利潤) = (${NNP}−${tax}) − ${nonlabor} = <b>${labor}</b><br>
+    <b>淨投資</b> = 毛投資 − 折舊 = (${fixed}+${inv}) − ${depreciation} = <b>${netInv}</b>
+  `;
+  r.classList.add('show');
+}
+
+/* ─────── PRICE INDEX CALC ─────── */
+function calcPriceIndex() {
+  const p1x = +document.getElementById('p1_px').value || 4;
+  const p1y = +document.getElementById('p1_py').value || 5;
+  const q1x = +document.getElementById('p1_qx').value || 25;
+  const q1y = +document.getElementById('p1_qy').value || 15;
+  const p2x = +document.getElementById('p2_px').value || 3;
+  const p2y = +document.getElementById('p2_py').value || 7;
+  const q2x = +document.getElementById('p2_qx').value || 20;
+  const q2y = +document.getElementById('p2_qy').value || 30;
+
+  const nomGNP = p1x*q1x + p1y*q1y;
+  const realGNP = p2x*q1x + p2y*q1y;
+  const deflator = (nomGNP/realGNP*100).toFixed(4);
+  // CPI: base period basket = q2 quantities, compare p1 vs p2
+  const cpi_num = p1x*q2x + p1y*q2y;
+  const cpi_den = p2x*q2x + p2y*q2y;
+  const cpi = (cpi_num/cpi_den*100).toFixed(4);
+
+  const r = document.getElementById('price_result');
+  r.innerHTML = `
+    <b>名目 GNP</b>（當期價格 × 當期數量）= ${p1x}×${q1x} + ${p1y}×${q1y} = <b>${nomGNP}</b><br>
+    <b>實質 GNP</b>（基期價格 × 當期數量）= ${p2x}×${q1x} + ${p2y}×${q1y} = <b>${realGNP}</b><br>
+    <b>GNP 平減指數</b> = 名目GNP / 實質GNP × 100 = ${nomGNP}/${realGNP} × 100 ≈ <b>${deflator}</b><br>
+    <b>CPI</b>（基期商品籃，拉氏）= (${p1x}×${q2x} + ${p1y}×${q2y}) / (${p2x}×${q2x} + ${p2y}×${q2y}) × 100 = ${cpi_num}/${cpi_den} × 100 ≈ <b>${cpi}</b>
+  `;
+  r.classList.add('show');
+}
+
+/* ─────── LABOR CALC ─────── */
+function calcLabor() {
+  const paid = +document.getElementById('lm_paid').value || 0;
+  const unpaid = +document.getElementById('lm_unpaid').value || 0;
+  const unemp = +document.getElementById('lm_unemp').value || 0;
+  const nonlab = +document.getElementById('lm_nonlabor').value || 0;
+
+  const employed = paid + unpaid;
+  const laborForce = employed + unemp;
+  const pop15 = laborForce + nonlab;
+  const unempRate = (unemp / laborForce * 100).toFixed(2);
+  const partRate = (laborForce / pop15 * 100).toFixed(2);
+
+  const r = document.getElementById('lm_result');
+  r.innerHTML = `
+    <b>就業者</b> = 有酬工作者 + ≥15小時無酬家族 = ${paid} + ${unpaid} = <b>${employed}</b><br>
+    <b>勞動力</b> = 就業者 + 失業人口 = ${employed} + ${unemp} = <b>${laborForce}</b><br>
+    <b>年滿15足歲民間人口</b> = 勞動力 + 非勞動力 = ${laborForce} + ${nonlab} = <b>${pop15}</b><br>
+    <b>失業率</b> = ${unemp} / ${laborForce} × 100% = <b>${unempRate}%</b><br>
+    <b>勞動參與率</b> = ${laborForce} / ${pop15} × 100% = <b>${partRate}%</b>
+  `;
+  r.classList.add('show');
+}
+
+/* ─────── FISHER ─────── */
+function calcFisher() {
+  const nom = +document.getElementById('fisher_nom').value;
+  const inf = +document.getElementById('fisher_inf').value;
+  const real = (nom - inf).toFixed(2);
+  document.getElementById('fisher_real').value = real;
+}
+
+/* ─────── MULTIPLIER SLIDER ─────── */
+function updateMultiplier(v) {
+  document.getElementById('mpc_val').textContent = v;
+  const m = (1/(1-v)).toFixed(2);
+  document.getElementById('mult_val').textContent = m;
+  document.getElementById('mult_big').textContent = m;
+}
+
+/* ─────── KEYNESIAN CALC ─────── */
+function calcEquilibrium() {
+  const C0 = +document.getElementById('ke_C0').value;
+  const MPC = +document.getElementById('ke_MPC').value;
+  const I = +document.getElementById('ke_I').value;
+  const G = +document.getElementById('ke_G').value || 0;
+  if (!MPC || MPC >= 1) { alert('MPC 需介於 0 和 1 之間'); return; }
+
+  const MPS = 1 - MPC;
+  const auto = C0 + I + G;
+  const mult = 1 / MPS;
+  const Y = auto * mult;
+  const S = -C0 + MPS * Y;
+
+  const r = document.getElementById('ke_result');
+  r.innerHTML = `
+    <b>MPS</b> = 1 − ${MPC} = <b>${MPS.toFixed(2)}</b><br>
+    <b>乘數</b> = 1 / MPS = 1 / ${MPS.toFixed(2)} = <b>${mult.toFixed(4)}</b><br>
+    <b>自發性支出</b> = C₀ + I + G = ${C0} + ${I} + ${G} = <b>${auto}</b><br>
+    <b>均衡所得 Y*</b> = ${auto} × ${mult.toFixed(4)} = <b>${Y.toFixed(2)}</b><br>
+    <b>儲蓄函數</b>：S = −${C0} + ${MPS.toFixed(2)}Y<br>
+    <b>均衡時儲蓄</b> = −${C0} + ${MPS.toFixed(2)} × ${Y.toFixed(2)} ≈ <b>${S.toFixed(2)}</b>（應等於 I+G = ${I+G}）
+  `;
+  r.classList.add('show');
+}
+
+function calcGRequired() {
+  const C0 = +document.getElementById('ke_C0').value;
+  const MPC = +document.getElementById('ke_MPC').value;
+  const I = +document.getElementById('ke_I').value;
+  const Ytarget = +document.getElementById('ke_Ytarget').value;
+  if (!MPC || MPC >= 1 || !Ytarget) { alert('請填入 MPC、I 和目標所得 Y*'); return; }
+
+  const MPS = 1 - MPC;
+  // Y = (C0 + I + G) / MPS  => G = Y * MPS - C0 - I
+  const G = Ytarget * MPS - C0 - I;
+
+  const r = document.getElementById('ke_result');
+  r.innerHTML = `
+    <b>均衡條件：</b>Y = C + I + G = (${C0} + ${MPC}Y + ${I} + G)<br>
+    Y × (1 − ${MPC}) = ${C0} + ${I} + G<br>
+    ${Ytarget} × ${MPS.toFixed(2)} = ${C0} + ${I} + G<br>
+    <b>G = ${Ytarget} × ${MPS.toFixed(2)} − ${C0} − ${I} = <span style="color:var(--accent)">${G.toFixed(2)}</span></b>
+  `;
+  r.classList.add('show');
+}
+
+/* ─────── QUIZ ─────── */
+const allQuestions = [
+  { q: '實質利率與名目利率的關係為何？', opts: ['實質利率 = 名目利率 + 通膨率','實質利率 = 名目利率 − 通膨率','名目利率 = 實質利率 × 通膨率','兩者無直接關係'], ans: 1, exp: '費雪方程式：實質利率 ≈ 名目利率 − 通貨膨脹率' },
+  { q: '下列何者不計入 GDP？', opts: ['台積電的晶片出口','政府興建道路的支出','失業救濟金','民間消費電器'], ans: 2, exp: '失業救濟金為移轉性支付，未對應生產，不計入 GDP。' },
+  { q: '氣餒的工作者（Discouraged Workers）被歸入哪一類？', opts: ['就業者','失業者','非勞動力','無酬工作者'], ans: 2, exp: '放棄求職者不在積極求職，被歸為非勞動力，不計入失業率。' },
+  { q: '鞋皮成本（Shoe-Leather Cost）是指什麼？', opts: ['因通膨而頻繁往來銀行消耗的資源','企業頻繁更改價目表的成本','因貿易逆差產生的外匯損失','生產過程中機器磨損的折舊'], ans: 0, exp: '通膨使持有現金不利，人們頻繁跑銀行理財，消耗時間與資源，稱為鞋皮成本。' },
+  { q: '賽依法則（Say\'s Law）的核心主張是？', opts: ['需求創造供給','供給自創需求','貨幣決定物價','政府支出創造就業'], ans: 1, exp: '賽依法則認為「供給自創需求」，生產就會創造等值的所得和消費。' },
+  { q: 'MPC = 0.75 時，乘數為何？', opts: ['2','3','4','5'], ans: 2, exp: '乘數 = 1/(1−MPC) = 1/(1−0.75) = 1/0.25 = 4' },
+  { q: '節儉的矛盾（Paradox of Thrift）說明什麼？', opts: ['個人越節儉，國家越富裕','全民同時節儉反使所得下降，總儲蓄不增','儲蓄率越高，投資越多','凱因斯反對個人儲蓄'], ans: 1, exp: '全民同時增加儲蓄→需求下降→所得下降→整體儲蓄並未增加，這是合成謬誤。' },
+  { q: 'GNP 平減指數的計算方式為何？', opts: ['CPI × 100','名目GNP / 實質GNP × 100','實質GNP / 名目GNP × 100','（名目GNP − 實質GNP）× 100'], ans: 1, exp: 'GNP平減指數 = 名目GNP / 實質GNP × 100，採帕氏指數。' },
+  { q: '充分就業時，下列哪種失業仍然存在？', opts: ['循環性失業','摩擦性失業','需求不足型失業','以上皆不存在'], ans: 1, exp: '充分就業是消除循環性失業，但摩擦性與結構性失業仍存在（構成自然失業率）。' },
+  { q: '若 C=600, I=150, G=100, X=80, M=50，GNP 為何？', opts: ['850','880','900','930'], ans: 2, exp: 'GNP = 600+150+100+(80−50) = 600+150+100+30 = 880... 重新算：600+150+100+30=880，選880。實際計算：600+150+100+30=880', realAns: 1 },
+  { q: 'CPI 使用哪一期的商品籃計算？', opts: ['當期商品籃（帕氏）','基期商品籃（拉氏）','兩期平均','每年更新'], ans: 1, exp: 'CPI 使用固定的基期商品籃（拉氏指數），因此有替代偏誤問題。' },
+  { q: '若 NNP=800，間接稅淨額=50，利息+地租+利潤=200，勞動報酬=？', opts: ['550','600','700','750'], ans: 0, exp: '勞動報酬 = NNP − 間接稅淨額 − (利息+地租+利潤) = 800−50−200 = 550' },
+  { q: '下列何者會影響 GDP 和 I？', opts: ['政府提高公務員薪資','小陳購買新建住宅','政府提高失業救濟金','央行降息'], ans: 1, exp: '新建住宅屬於固定資本形成（I），同時計入 GDP 支出面。' },
+  { q: '勞動參與率的計算公式為何？', opts: ['失業人口 / 勞動力 × 100%','勞動力 / 年滿15足歲民間人口 × 100%','就業者 / 總人口 × 100%','失業者 / 總人口 × 100%'], ans: 1, exp: '勞動參與率 = 勞動力 / 年滿15足歲民間人口 × 100%' },
+  { q: '若 C₀=40, MPC=0.8, I=100, G=0，均衡所得為？', opts: ['600','700','800','900'], ans: 1, exp: '自發支出=40+100=140，乘數=1/(1-0.8)=5，Y=140×5=700' },
+];
+
+// Fix Q10 - it was 880 not 900
+allQuestions[9].opts = ['830','880','900','950'];
+allQuestions[9].ans = 1;
+allQuestions[9].exp = 'GNP = C+I+G+(X−M) = 600+150+100+(80−50) = 600+150+100+30 = 880';
+
+let quizQuestions = [];
+let qIdx = 0, score = 0;
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function quizRestart() {
+  quizQuestions = shuffle(allQuestions).slice(0, 15);
+  qIdx = 0; score = 0;
+  document.getElementById('quiz_score').textContent = '得分：0';
+  document.getElementById('btn_restart').style.display = 'none';
+  document.getElementById('btn_next').disabled = true;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  if (qIdx >= quizQuestions.length) {
+    document.getElementById('quiz_q').textContent = `測驗完成！得分：${score} / ${quizQuestions.length}`;
+    document.getElementById('quiz_opts').innerHTML = '';
+    document.getElementById('quiz_fb').textContent = score >= 12 ? '太棒了！掌握度很高 🎉' : score >= 8 ? '不錯！繼續加油 💪' : '建議再複習一下各概念';
+    document.getElementById('quiz_fb').className = 'quiz-feedback ok';
+    document.getElementById('btn_next').style.display = 'none';
+    document.getElementById('btn_restart').style.display = 'inline-block';
+    document.getElementById('quiz_progress').style.width = '100%';
+    return;
+  }
+  const q = quizQuestions[qIdx];
+  document.getElementById('quiz_q').textContent = `Q${qIdx+1}. ${q.q}`;
+  document.getElementById('quiz_counter').textContent = `第 ${qIdx+1} 題 / 共 ${quizQuestions.length} 題`;
+  document.getElementById('quiz_progress').style.width = `${(qIdx/quizQuestions.length)*100}%`;
+  document.getElementById('quiz_fb').textContent = '';
+  document.getElementById('quiz_fb').className = 'quiz-feedback';
+  document.getElementById('btn_next').disabled = true;
+
+  const opts = document.getElementById('quiz_opts');
+  opts.innerHTML = q.opts.map((o, i) =>
+    `<button class="quiz-opt" onclick="answerQuiz(${i})">${String.fromCharCode(65+i)}. ${o}</button>`
+  ).join('');
+}
+
+function answerQuiz(selected) {
+  const q = quizQuestions[qIdx];
+  const btns = document.querySelectorAll('.quiz-opt');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('quiz_fb');
+  if (selected === q.ans) {
+    btns[selected].classList.add('correct');
+    fb.textContent = `✓ 正確！${q.exp}`; fb.className = 'quiz-feedback ok';
+    score++;
+    document.getElementById('quiz_score').textContent = `得分：${score}`;
+  } else {
+    btns[selected].classList.add('wrong');
+    btns[q.ans].classList.add('correct');
+    fb.textContent = `✗ 答案是 ${String.fromCharCode(65+q.ans)}。${q.exp}`; fb.className = 'quiz-feedback no';
+  }
+  document.getElementById('btn_next').disabled = false;
+}
+
+function quizNext() {
+  qIdx++;
+  renderQuiz();
+}
+
+// Init quiz
+quizRestart();
+</script>
+</body>
+</html>
