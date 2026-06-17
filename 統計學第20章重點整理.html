@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>統計學第20章：無母數檢定 重點整理</title>
+<style>
+:root {
+  --blue: #1a3a5c;
+  --lb: #2d6a9f;
+  --accent: #e67e22;
+  --green: #27ae60;
+  --red: #c0392b;
+  --purple: #7d3c98;
+  --teal: #148f77;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f8; color: #2c3e50; line-height: 1.7; font-size: 15px; }
+header { background: linear-gradient(135deg, var(--blue), #2980b9); color: white; padding: 32px 40px; }
+header h1 { font-size: 2rem; }
+header p { opacity: 0.85; margin-top: 6px; }
+.toc { position: sticky; top: 0; background: var(--blue); z-index: 100; padding: 10px 30px; display: flex; flex-wrap: wrap; gap: 6px; }
+.toc a { color: #cde; text-decoration: none; font-size: 13px; padding: 3px 10px; border-radius: 12px; border: 1px solid #4a7aaa; transition: background 0.2s; }
+.toc a:hover { background: #2980b9; color: white; }
+.container { max-width: 1060px; margin: 30px auto; padding: 0 20px 60px; }
+h2 { background: var(--blue); color: white; padding: 14px 22px; border-radius: 8px; font-size: 1.3rem; margin: 36px 0 18px; }
+h3 { color: var(--lb); border-left: 5px solid var(--lb); padding-left: 12px; font-size: 1.1rem; margin: 24px 0 12px; }
+h4 { color: var(--blue); margin: 16px 0 8px; font-size: 1rem; }
+p { margin-bottom: 10px; }
+.fbox { background: #eaf2fb; border: 2px solid var(--lb); border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+.fbox .title { font-weight: bold; color: var(--blue); margin-bottom: 8px; font-size: 1rem; }
+.fbox .formula { text-align: center; font-size: 1.1rem; color: #1a3a5c; padding: 6px 0; letter-spacing: 0.5px; }
+.warn { background: #fdf2e9; border-left: 5px solid var(--accent); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+.warn::before { content: "⚠ 注意："; font-weight: bold; color: var(--accent); }
+.tip { background: #eafaf1; border-left: 5px solid var(--green); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+.tip::before { content: "💡 白話說明："; font-weight: bold; color: var(--green); }
+.note { background: #f8f9fa; border-left: 5px solid #aaa; border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+.purple { background: #f5eef8; border-left: 5px solid var(--purple); border-radius: 6px; padding: 12px 16px; margin: 12px 0; }
+.purple::before { content: "📌 重點："; font-weight: bold; color: var(--purple); }
+.exbox { background: white; border: 1px solid #d5e8f5; border-radius: 10px; padding: 22px 26px; margin: 22px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.exh { font-weight: bold; color: var(--blue); font-size: 1.05rem; border-bottom: 2px solid #d5e8f5; padding-bottom: 8px; margin-bottom: 14px; }
+.exb { color: #555; margin-bottom: 14px; }
+.step { background: #f0f7ff; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+.step-num { display: inline-block; background: var(--lb); color: white; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 22px; font-size: 12px; font-weight: bold; margin-right: 8px; }
+.ans { background: #e8f8f0; border: 1px solid #a9dfbf; border-radius: 6px; padding: 10px 16px; margin-top: 10px; color: #1d6a3a; font-weight: bold; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+th { background: var(--blue); color: white; padding: 9px 12px; text-align: center; }
+td { border: 1px solid #d0dce8; padding: 8px 12px; text-align: center; }
+tr:nth-child(even) td { background: #f0f5fb; }
+.compare-table th { background: var(--teal); }
+.badge { display: inline-block; background: var(--accent); color: white; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: bold; margin-left: 6px; }
+.badge-g { background: var(--green); }
+.badge-p { background: var(--purple); }
+ul, ol { padding-left: 22px; margin: 8px 0; }
+li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>第20章：無母數檢定（Nonparametric Tests）</h1>
+  <p>20.1 Wilcoxon 符號等級檢定 ｜ 20.2 兩樣本 Wilcoxon 檢定 ｜ 20.3 Kruskal-Wallis 檢定 ｜ 20.4 Spearman 等級相關 ｜ 20.5 符號檢定 ｜ 20.6 連串檢定</p>
+</header>
+
+<nav class="toc">
+  <a href="#intro">導論</a>
+  <a href="#s201">20.1 Wilcoxon單樣本</a>
+  <a href="#s202">20.2 兩樣本Wilcoxon</a>
+  <a href="#s203">20.3 Kruskal-Wallis</a>
+  <a href="#s204">20.4 Spearman相關</a>
+  <a href="#s205">20.5 符號檢定</a>
+  <a href="#s206">20.6 連串檢定</a>
+  <a href="#summary">總覽比較表</a>
+  <a href="#ex201">習題20.1</a>
+  <a href="#ex202">習題20.2</a>
+  <a href="#ex203">習題20.3</a>
+  <a href="#ex204">習題20.4</a>
+  <a href="#ex205">習題20.5</a>
+  <a href="#ex206">習題20.6</a>
+</nav>
+
+<div class="container">
+
+<!-- ===== 導論 ===== -->
+<h2 id="intro">為什麼需要無母數檢定？</h2>
+
+<div class="tip">
+參數檢定（t 檢定、F 檢定）假設母體為常態分布。當：<br>
+①母體明顯非常態（如報酬率有「肥尾」fat-tail）<br>
+②樣本數很小、無法靠中央極限定理補救<br>
+③資料只是次序尺度（ordinal）而非區間/比率尺度<br>
+→ 就改用「無母數檢定（distribution-free tests）」，不需假設母體分布形狀。
+</div>
+
+<div class="warn">
+代價是：當常態假設確實成立時，無母數檢定的檢定力（power）較低，更容易犯型二錯誤（β↑）。因此「能用參數就用參數，無法用才換無母數」。
+</div>
+
+<h3>參數 vs 無母數對照</h3>
+<table class="compare-table">
+<tr><th>情境</th><th>參數檢定</th><th>無母數替代</th></tr>
+<tr><td>單樣本中央位置</td><td>t 檢定（μ）</td><td>Wilcoxon 符號等級檢定（中位數 m）</td></tr>
+<tr><td>成對差異</td><td>配對 t 檢定</td><td>Wilcoxon 符號等級檢定</td></tr>
+<tr><td>兩獨立樣本</td><td>獨立 t 檢定</td><td>Wilcoxon 等級和檢定（Mann-Whitney）</td></tr>
+<tr><td>三組以上</td><td>單因子 ANOVA（F 檢定）</td><td>Kruskal-Wallis 檢定</td></tr>
+<tr><td>相關性</td><td>Pearson 相關 t 檢定</td><td>Spearman 等級相關檢定</td></tr>
+<tr><td>配對次序資料</td><td>—</td><td>符號檢定（Sign Test）</td></tr>
+<tr><td>序列隨機性</td><td>—</td><td>Wald-Wolfowitz 連串檢定</td></tr>
+</table>
+
+<!-- ===== 20.1 ===== -->
+<h2 id="s201">20.1 Wilcoxon 符號等級檢定（單一母體中位數）</h2>
+
+<h3>適用時機</h3>
+<p>想檢定母體中位數 m 是否等於某假設值 m₀，但母體非常態或樣本小。唯一要求：母體分布連續且對稱。</p>
+
+<div class="fbox">
+<div class="title">步驟</div>
+<ol>
+<li>計算差值 d<sub>i</sub> = x<sub>i</sub> − m₀</li>
+<li>去掉 d<sub>i</sub> = 0 的觀測值；n = 剩餘樣本數</li>
+<li>對 |d<sub>i</sub>| 由小到大排名（同值取平均等級）</li>
+<li>分別加總負差異的等級（T⁻）和正差異的等級（T⁺）</li>
+<li>驗算：T⁻ + T⁺ = n(n+1)/2</li>
+<li>檢定統計量 <b>T = T⁺</b></li>
+</ol>
+</div>
+
+<div class="fbox">
+<div class="title">THE WILCOXON SIGNED-RANK TEST</div>
+<div class="formula">T = T⁺（正差異的等級總和）</div>
+<br>
+<b>小樣本（n ≤ 10）：</b>用統計軟體或特別表查 p 值。<br><br>
+<b>大樣本（n ≥ 10）：</b>T 的抽樣分布近似常態：
+<div class="formula">μ<sub>T</sub> = n(n+1)/4</div>
+<div class="formula">σ<sub>T</sub> = √[n(n+1)(2n+1)/24]</div>
+<div class="formula">z = (T − μ<sub>T</sub>) / σ<sub>T</sub></div>
+</div>
+
+<div class="warn">
+T 不是 t 分布的 t 值！這個 T 是等級總和，是全新的統計量，要對應常態分布（z）。
+</div>
+
+<h3>假設形式</h3>
+<table>
+<tr><th>雙尾</th><th>右尾</th><th>左尾</th></tr>
+<tr><td>H₀: m = m₀<br>Hₐ: m ≠ m₀</td><td>H₀: m ≤ m₀<br>Hₐ: m > m₀</td><td>H₀: m ≥ m₀<br>Hₐ: m < m₀</td></tr>
+</table>
+
+<div class="tip">
+直覺：如果中位數真的等於 m₀，則正差異與負差異應各占一半，T⁺ ≈ T⁻ ≈ n(n+1)/4。若 T⁺ 大很多，代表大多數觀測值都在 m₀ 右邊 → 中位數可能 > m₀。
+</div>
+
+<!-- ===== 20.2 ===== -->
+<h2 id="s202">20.2 兩樣本 Wilcoxon 檢定</h2>
+
+<h3>配對樣本：Wilcoxon 符號等級檢定</h3>
+
+<div class="fbox">
+<div class="title">參數：中位數差異 m<sub>D</sub>（D = X − Y）</div>
+<b>步驟：</b>先計算每對的差值 d<sub>i</sub> = x<sub>i</sub> − y<sub>i</sub>，其餘步驟與 20.1 完全相同。<br><br>
+假設形式：H₀: m<sub>D</sub> = 0 vs Hₐ: m<sub>D</sub> ≠ 0（或 > 0 或 < 0）
+</div>
+
+<h3>獨立樣本：Wilcoxon 等級和檢定（Mann-Whitney）</h3>
+
+<div class="fbox">
+<div class="title">步驟</div>
+<ol>
+<li>將兩組合併，對全部 n = n₁ + n₂ 筆資料由小到大排名</li>
+<li>同值取平均等級</li>
+<li>分別計算第1組等級和 W₁、第2組等級和 W₂</li>
+<li>驗算：W₁ + W₂ = (n₁+n₂)(n₁+n₂+1)/2</li>
+<li>檢定統計量 <b>W = W₁</b></li>
+</ol>
+</div>
+
+<div class="fbox">
+<div class="title">THE WILCOXON RANK-SUM TEST（大樣本：n₁≥10 且 n₂≥10）</div>
+<div class="formula">μ<sub>W</sub> = n₁(n₁+n₂+1) / 2</div>
+<div class="formula">σ<sub>W</sub> = √[n₁n₂(n₁+n₂+1) / 12]</div>
+<div class="formula">z = (W − μ<sub>W</sub>) / σ<sub>W</sub></div>
+</div>
+
+<div class="warn">
+<b>等級和檢定</b>把兩組資料全部混在一起排名，不是分開排！若中位數相同，兩組應該交錯出現，等級和差不多；若某組中位數較大，那組的觀測值通常佔據較高等級。
+</div>
+
+<!-- ===== 20.3 ===== -->
+<h2 id="s203">20.3 Kruskal-Wallis 檢定（三組以上中位數）</h2>
+
+<div class="tip">
+這是 ANOVA（F 檢定）的無母數版本。ANOVA 假設各組都是常態且變異數相等；當這些假設不成立時，改用 Kruskal-Wallis。
+</div>
+
+<h3>步驟</h3>
+<div class="fbox">
+<ol>
+<li>將全部 c 組資料合併，共 n = Σnᵢ 筆，由小到大排名（同值取平均等級）</li>
+<li>計算各組的等級和 Rᵢ</li>
+<li>計算 H 統計量</li>
+<li>p 值查 χ² 分布表，df = c − 1</li>
+<li><b>永遠是右尾（right-tailed）檢定</b></li>
+</ol>
+</div>
+
+<div class="fbox">
+<div class="title">THE KRUSKAL-WALLIS TEST STATISTIC H</div>
+<div class="formula">H = [12 / (n(n+1))] × Σ(Rᵢ² / nᵢ) − 3(n+1)</div>
+<p style="text-align:center; margin-top:8px;">其中 Rᵢ = 第 i 組等級和，nᵢ = 第 i 組樣本數，n = Σnᵢ，c = 組數</p>
+<p style="text-align:center;">當 nᵢ ≥ 5 時，H ~ χ²(df = c−1)</p>
+</div>
+
+<div class="warn">
+Kruskal-Wallis 只能告訴你「有沒有至少一組中位數不同」，<b>無法指出是哪兩組不同</b>（類似 ANOVA 的整體 F 檢定，需要事後多重比較才能知道細節）。
+</div>
+
+<div class="purple">
+計算 H 的關鍵：先算每組的 Rᵢ²/nᵢ，再全部加總。容易算錯的地方是 n 是「全部資料總數」不是組數 c。
+</div>
+
+<!-- ===== 20.4 ===== -->
+<h2 id="s204">20.4 Spearman 等級相關檢定</h2>
+
+<div class="tip">
+Pearson 相關係數衡量「線性」關係；Spearman 等級相關係數衡量「單調」關係（x 越大，y 是否也越大？），且不需要常態假設，是 Pearson 的無母數版。
+</div>
+
+<h3>計算步驟</h3>
+<div class="fbox">
+<ol>
+<li>對 x 變數排名（從小到大），得到各觀測的 x 等級</li>
+<li>對 y 變數排名（從小到大），得到各觀測的 y 等級</li>
+<li>計算每對的等級差 dᵢ = (x 等級) − (y 等級)</li>
+<li>計算 Σdᵢ²（驗算：Σdᵢ 應 = 0）</li>
+<li>代入公式求 r<sub>S</sub></li>
+</ol>
+</div>
+
+<div class="fbox">
+<div class="title">THE SPEARMAN RANK CORRELATION TEST</div>
+<div class="formula">r<sub>S</sub> = 1 − 6Σdᵢ² / [n(n²−1)]</div>
+<br>
+<b>n ≤ 10：</b>用軟體或特別表查 p 值。<br>
+<b>n ≥ 10：</b>r<sub>S</sub> 近似常態，檢定統計量：
+<div class="formula">z = r<sub>S</sub> × √(n−1)</div>
+</div>
+
+<div class="warn">
+Spearman 係數公式中的「6」是固定常數，不是樣本相關的數字！公式記法：rs = 1 − <b>6</b>Σd²/[n(n²−1)]。
+</div>
+
+<h3>假設形式</h3>
+<table>
+<tr><th>雙尾（是否有相關）</th><th>右尾（是否正相關）</th><th>左尾（是否負相關）</th></tr>
+<tr><td>H₀: ρ<sub>S</sub> = 0<br>Hₐ: ρ<sub>S</sub> ≠ 0</td><td>H₀: ρ<sub>S</sub> ≤ 0<br>Hₐ: ρ<sub>S</sub> > 0</td><td>H₀: ρ<sub>S</sub> ≥ 0<br>Hₐ: ρ<sub>S</sub> < 0</td></tr>
+</table>
+
+<!-- ===== 20.5 ===== -->
+<h2 id="s205">20.5 符號檢定（Sign Test）</h2>
+
+<div class="tip">
+用於「配對次序尺度資料」，例如讓客戶比較新舊產品並評分（1~5分），但這種分數的差距沒有意義（5分和4分的差≠1分和2分的差）。符號檢定只看「誰比較高」（正號 + 或負號 −），完全忽略差異大小。
+</div>
+
+<h3>步驟</h3>
+<div class="fbox">
+<ol>
+<li>對每對計算差值：第一個 > 第二個 → 記「+」；第一個 < 第二個 → 記「−」；相等 → 丟棄（不計入 n）</li>
+<li>n = 有效配對數（非零差異數）</li>
+<li>x = 正號（+）的個數</li>
+<li>p̄ = x/n（正號比例）</li>
+<li>當 n ≥ 10，用常態近似</li>
+</ol>
+</div>
+
+<div class="fbox">
+<div class="title">THE TEST STATISTIC FOR THE SIGN TEST（n ≥ 10）</div>
+<div class="formula">p̄ = x/n（x = 正號個數）</div>
+<div class="formula">z = (p̄ − 0.5) / (0.5/√n)</div>
+<p style="text-align:center; margin-top:8px;">這實際上是比例檢定：H₀假設 p = 0.50（正負號各半）</p>
+</div>
+
+<h3>假設形式</h3>
+<table>
+<tr><th>雙尾</th><th>右尾（正號較多）</th><th>左尾（負號較多）</th></tr>
+<tr><td>H₀: p = 0.50<br>Hₐ: p ≠ 0.50</td><td>H₀: p ≤ 0.50<br>Hₐ: p > 0.50</td><td>H₀: p ≥ 0.50<br>Hₐ: p < 0.50</td></tr>
+</table>
+
+<div class="warn">
+符號檢定 vs Wilcoxon 符號等級檢定：當資料是區間/比率尺度（有具體數字），優先用 Wilcoxon 符號等級檢定，因為它同時考慮差異的方向和大小，檢定力更強。符號檢定只適合純次序資料或差異大小無意義的情況。
+</div>
+
+<!-- ===== 20.6 ===== -->
+<h2 id="s206">20.6 Wald-Wolfowitz 連串檢定（Runs Test）</h2>
+
+<div class="tip">
+想知道一個序列是否「隨機」，例如：機器填充是否有規律地忽多忽少？股票漲跌是否有固定型態？此檢定不看數值大小，只看「同類連在一起的長度」是否異常。
+</div>
+
+<h3>核心概念</h3>
+<div class="purple">
+<b>連串（Run）</b>：序列中同一類別的不間斷連續段。<br>
+例：OOOUU<u>OOO</u>UU → 有 4 個連串（OOO、UU、OOO、UU）<br>
+太少連串 → 物品被分堆，有規律趨勢；太多連串 → 交替太頻繁，也異常。<br>
+因此連串檢定<b>永遠是雙尾檢定</b>。
+</div>
+
+<div class="fbox">
+<div class="title">THE TEST STATISTIC FOR THE WALD-WOLFOWITZ RUNS TEST（n₁≥10, n₂≥10）</div>
+<div class="formula">μ<sub>R</sub> = 2n₁n₂/n + 1</div>
+<div class="formula">σ<sub>R</sub> = √[2n₁n₂(2n₁n₂−n) / (n²(n−1))]</div>
+<div class="formula">z = (R − μ<sub>R</sub>) / σ<sub>R</sub></div>
+<p style="text-align:center; margin-top:8px;">R = 連串總數；n₁, n₂ = 兩類別個數；n = n₁ + n₂</p>
+</div>
+
+<h3>中位數上下連串法</h3>
+<div class="note">
+當資料是連續數值時，以<b>樣本中位數</b>為界線，高於中位數記 A、低於中位數記 B（等於中位數的觀測值丟棄），再對 A/B 序列做連串檢定。<br>
+→ 太少連串（R 遠小於 μ<sub>R</sub>）暗示有<b>趨勢</b>（前期全 A 後期全 B 或相反）。<br>
+→ 太多連串暗示有<b>週期性</b>波動。
+</div>
+
+<!-- ===== 總覽 ===== -->
+<h2 id="summary">各方法總覽比較</h2>
+<table class="compare-table">
+<tr><th>方法</th><th>情境</th><th>統計量</th><th>尾數</th><th>大樣本條件</th></tr>
+<tr><td>Wilcoxon 符號等級</td><td>單樣本中位數 / 配對差異</td><td>T = T⁺</td><td>雙/左/右</td><td>n ≥ 10</td></tr>
+<tr><td>Wilcoxon 等級和</td><td>兩獨立樣本中位數</td><td>W = W₁</td><td>雙/左/右</td><td>n₁≥10 且 n₂≥10</td></tr>
+<tr><td>Kruskal-Wallis</td><td>三組以上中位數</td><td>H ~ χ²(c−1)</td><td>右尾（只有右尾）</td><td>nᵢ ≥ 5</td></tr>
+<tr><td>Spearman 等級相關</td><td>兩變數是否單調相關</td><td>z = r<sub>S</sub>√(n−1)</td><td>雙/左/右</td><td>n ≥ 10</td></tr>
+<tr><td>符號檢定</td><td>配對次序資料差異</td><td>z = (p̄−0.5)/(0.5/√n)</td><td>雙/左/右</td><td>n ≥ 10</td></tr>
+<tr><td>連串檢定（Runs）</td><td>序列是否隨機</td><td>z = (R−μ<sub>R</sub>)/σ<sub>R</sub></td><td>雙尾（只有雙尾）</td><td>n₁≥10 且 n₂≥10</td></tr>
+</table>
+
+<!-- ===== 習題 20.1 ===== -->
+<h2 id="ex201">習題 20.1</h2>
+
+<div class="exbox">
+<div class="exh">習題 4｜Wilcoxon 符號等級檢定（單樣本，大樣本常態近似）</div>
+<div class="exb">
+H₀: m ≤ 150，Hₐ: m > 150（右尾）；n = 30，T⁻ = 200，T⁺ = 265<br>
+（驗算：T⁻ + T⁺ = 200 + 265 = 465 = 30×31/2 ✓）
+</div>
+
+<p><b>a. 假設 T 的抽樣分布服從常態分布，計算檢定統計量 z 的值。</b></p>
+<div class="ans">
+T = T⁺ = 265<br>
+μ<sub>T</sub> = 30×31/4 = 232.5<br>
+σ<sub>T</sub> = √[30×31×61/24] = √2,363.75 = 48.619<br>
+z = (265 − 232.5) / 48.619 = <b>0.6684</b>
+</div>
+
+<p><b>b. 計算 p 值。</b></p>
+<div class="ans">右尾 p-value = P(Z ≥ 0.6684) = 1 − 0.7481 = <b>0.2519</b></div>
+
+<p><b>c. 在 5% 的顯著水準下，中位數是否大於 150？請解釋原因。</b></p>
+<div class="ans">不拒絕 H₀。p-value = 0.2519 > 0.05，在 5% 顯著水準下，無法結論母體中位數大於 150。</div>
+
+<div class="note"><b>容易出錯：</b>σ<sub>T</sub> 的公式中要代入 2n+1 = 61，不是 2n = 60。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 5｜Wilcoxon 符號等級檢定（手動排名）</div>
+<div class="exb">
+資料：105, 90, 110, 80, 85, 85, 103, 70, 115, 75<br>
+H₀: m = 100，Hₐ: m ≠ 100（雙尾，α = 0.10）
+</div>
+
+<div class="note" style="margin-bottom:12px;">
+先計算 dᵢ = xᵢ − 100，對 |dᵢ| 排名（同值取平均等級），再加總 T⁻ 與 T⁺：
+<table>
+<tr><th>原值</th><th>d</th><th>|d|</th><th>等級</th><th>T⁻</th><th>T⁺</th></tr>
+<tr><td>105</td><td>+5</td><td>5</td><td>2</td><td></td><td>2</td></tr>
+<tr><td>90</td><td>−10</td><td>10</td><td>3.5</td><td>3.5</td><td></td></tr>
+<tr><td>110</td><td>+10</td><td>10</td><td>3.5</td><td></td><td>3.5</td></tr>
+<tr><td>80</td><td>−20</td><td>20</td><td>8</td><td>8</td><td></td></tr>
+<tr><td>85</td><td>−15</td><td>15</td><td>6</td><td>6</td><td></td></tr>
+<tr><td>85</td><td>−15</td><td>15</td><td>6</td><td>6</td><td></td></tr>
+<tr><td>103</td><td>+3</td><td>3</td><td>1</td><td></td><td>1</td></tr>
+<tr><td>70</td><td>−30</td><td>30</td><td>10</td><td>10</td><td></td></tr>
+<tr><td>115</td><td>+15</td><td>15</td><td>6</td><td></td><td>6</td></tr>
+<tr><td>75</td><td>−25</td><td>25</td><td>9</td><td>9</td><td></td></tr>
+<tr><td colspan="4"><b>合計</b></td><td><b>T⁻ = 42.5</b></td><td><b>T⁺ = 12.5</b></td></tr>
+</table>
+驗算：42.5 + 12.5 = 55 = 10×11/2 ✓　（10出現2次→等級3.5；15出現3次→等級6）
+</div>
+
+<p><b>a. 指定競爭假設，並判斷中位數是否不等於 100。</b></p>
+<div class="ans">H₀: m = 100；Hₐ: m ≠ 100（雙尾）</div>
+
+<p><b>b. 假設 T 的抽樣分布服從常態分布，計算檢定統計量 z 及 p 值。</b></p>
+<div class="ans">
+T = T⁺ = 12.5<br>
+μ<sub>T</sub> = 10×11/4 = 27.5<br>
+σ<sub>T</sub> = √[10×11×21/24] = √96.25 = 9.8107<br>
+z = (12.5 − 27.5) / 9.8107 = <b>−1.5289</b><br>
+雙尾 p-value = 2 × P(Z ≤ −1.5289) = 2 × 0.0633 = <b>0.1266</b>
+</div>
+
+<p><b>c. 在 10% 的顯著水準下，中位數是否不等於 100？請解釋原因。</b></p>
+<div class="ans">不拒絕 H₀。p-value = 0.1266 > 0.10，在 10% 顯著水準下，無法結論中位數不等於 100。</div>
+</div>
+
+<!-- ===== 習題 20.2 ===== -->
+<h2 id="ex202">習題 20.2</h2>
+
+<div class="exbox">
+<div class="exh">習題 12｜Wilcoxon 符號等級檢定（配對樣本）</div>
+<div class="exb">配對樣本 n = 20，T = T⁺ = 165</div>
+
+<p><b>a. 指定競爭假設，以判斷中位數差異是否大於零。</b></p>
+<div class="ans">H₀: m<sub>D</sub> ≤ 0；Hₐ: m<sub>D</sub> > 0（右尾）</div>
+
+<p><b>b. 使用常態近似計算 Z 檢定統計量的值。</b></p>
+<div class="ans">
+μ<sub>T</sub> = 20×21/4 = 105<br>
+σ<sub>T</sub> = √[20×21×41/24] = √717.5 = 26.786<br>
+z = (165 − 105) / 26.786 = <b>2.2399</b>
+</div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">右尾 p-value = P(Z ≥ 2.2399) ≈ <b>0.0126</b></div>
+
+<p><b>d. 在 5% 顯著水準下，結論為何？請解釋原因。</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0126 &lt; 0.05，在 5% 顯著水準下，中位數差異顯著大於零。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 13｜Wilcoxon 符號等級檢定（配對，雙尾）</div>
+<div class="exb">
+H₀: m<sub>D</sub> = 0，Hₐ: m<sub>D</sub> ≠ 0；n = 50，T⁻ = 400，T⁺ = 875<br>
+（驗算：400 + 875 = 1275 = 50×51/2 ✓）
+</div>
+
+<p><b>a. 使用常態近似計算 Z 檢定統計量的值。</b></p>
+<div class="ans">
+T = T⁺ = 875<br>
+μ<sub>T</sub> = 50×51/4 = 637.5<br>
+σ<sub>T</sub> = √[50×51×101/24] = √10,731.25 = 103.59<br>
+z = (875 − 637.5) / 103.59 = <b>2.2927</b>
+</div>
+
+<p><b>b. 計算 p 值。</b></p>
+<div class="ans">雙尾 p-value = 2 × P(Z ≥ 2.2927) = 2 × 0.0109 = <b>0.0218</b></div>
+
+<p><b>c. 在 5% 顯著水準下，結論為何？請解釋原因。</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0218 &lt; 0.05，在 5% 顯著水準下，中位數差異顯著不等於零。</div>
+</div>
+
+<!-- ===== 習題 20.3 ===== -->
+<h2 id="ex203">習題 20.3（Kruskal-Wallis）</h2>
+
+<div class="exbox">
+<div class="exh">習題 29｜Kruskal-Wallis 檢定</div>
+<div class="exb">c = 3 個獨立樣本，Kruskal-Wallis 統計量 H = 4.5</div>
+
+<p><b>a. 指定競爭假設，以檢定各中位數是否存在差異。</b></p>
+<div class="ans">H₀: m₁ = m₂ = m₃；Hₐ: 至少有一個中位數不同</div>
+
+<p><b>b. 在 10% 的顯著水準下，各中位數是否有差異？請解釋原因。</b></p>
+<div class="ans">
+df = c − 1 = 2；p-value = P(χ²₂ ≥ 4.5) ≈ 0.1054<br>
+不拒絕 H₀。p-value = 0.1054 > 0.10，在 10% 顯著水準下，三組中位數沒有顯著差異。
+</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 30｜Kruskal-Wallis 檢定</div>
+<div class="exb">c = 5 個獨立樣本，Kruskal-Wallis 統計量 H = 12.4</div>
+
+<p><b>a. 指定競爭假設，以檢定各中位數是否存在差異。</b></p>
+<div class="ans">H₀: m₁ = m₂ = m₃ = m₄ = m₅；Hₐ: 至少有一個中位數不同</div>
+
+<p><b>b. 在 5% 的顯著水準下，各中位數是否有差異？請解釋原因。</b></p>
+<div class="ans">
+df = c − 1 = 4；p-value = P(χ²₄ ≥ 12.4) ≈ 0.0146<br>
+拒絕 H₀。p-value = 0.0146 &lt; 0.05，在 5% 顯著水準下，五組中位數並非全部相同。
+</div>
+</div>
+
+<!-- ===== 習題 20.4 ===== -->
+<h2 id="ex204">習題 20.4（Spearman 等級相關）</h2>
+
+<div class="exbox">
+<div class="exh">習題 50｜Spearman 相關（n=65，r<sub>S</sub>=0.85）</div>
+<div class="exb">65個人的教育年數與薪資，Spearman 係數 r<sub>S</sub> = 0.85</div>
+
+<p><b>a. 指定競爭假設，以判斷 Spearman 等級相關係數是否不等於零。</b></p>
+<div class="ans">H₀: ρ<sub>S</sub> = 0；Hₐ: ρ<sub>S</sub> ≠ 0（雙尾）</div>
+
+<p><b>b. 假設 r<sub>S</sub> 的分布近似常態，計算 Z 檢定統計量與 p 值。</b></p>
+<div class="ans">
+z = 0.85 × √(65−1) = 0.85 × 8 = <b>6.80</b><br>
+p-value = 2 × P(Z ≥ 6.80) ≈ <b>0.0000（極小）</b>
+</div>
+
+<p><b>c. 在 5% 顯著水準下，教育年數與薪資是否相關？</b></p>
+<div class="ans">拒絕 H₀。p-value ≈ 0 &lt; 0.05，教育年數與薪資存在顯著相關。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 51｜Spearman 相關（n=100，r<sub>S</sub>=−0.60）</div>
+<div class="exb">100輛車的車重與油耗（MPG），Spearman 係數 r<sub>S</sub> = −0.60</div>
+
+<p><b>a. 指定競爭假設，以判斷 Spearman 等級相關係數是否小於零。</b></p>
+<div class="ans">H₀: ρ<sub>S</sub> ≥ 0；Hₐ: ρ<sub>S</sub> &lt; 0（左尾）</div>
+
+<p><b>b. 假設 r<sub>S</sub> 的分布近似常態，計算 Z 檢定統計量與 p 值。</b></p>
+<div class="ans">
+z = −0.60 × √(100−1) = −0.60 × 9.9499 = <b>−5.9699</b><br>
+p-value = P(Z ≤ −5.9699) ≈ <b>0.0000（極小）</b>
+</div>
+
+<p><b>c. 在 5% 顯著水準下，車重與油耗之間是否存在負相關？</b></p>
+<div class="ans">拒絕 H₀。p-value ≈ 0 &lt; 0.05，車重與油耗之間存在顯著負相關。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 55｜Spearman 相關（n=65，r<sub>S</sub>=0.45）</div>
+<div class="exb">65家公司的廣告支出與銷售額，Spearman 係數 r<sub>S</sub> = 0.45</div>
+
+<p><b>a. 指定競爭假設，以判斷 Spearman 等級相關係數是否大於零。</b></p>
+<div class="ans">H₀: ρ<sub>S</sub> ≤ 0；Hₐ: ρ<sub>S</sub> > 0（右尾）</div>
+
+<p><b>b. 假設 r<sub>S</sub> 的分布近似常態，計算 Z 檢定統計量與 p 值。</b></p>
+<div class="ans">
+z = 0.45 × √(65−1) = 0.45 × 8 = <b>3.60</b><br>
+p-value = P(Z ≥ 3.60) ≈ <b>0.0002</b>
+</div>
+
+<p><b>c. 在 5% 顯著水準下，廣告支出與銷售額是否正相關？請解釋原因。</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0002 &lt; 0.05，廣告支出與銷售額之間存在顯著正相關。</div>
+</div>
+
+<!-- ===== 習題 20.5 ===== -->
+<h2 id="ex205">習題 20.5（符號檢定）</h2>
+
+<div class="exbox">
+<div class="exh">習題 57｜符號檢定</div>
+<div class="exb">H₀: p ≤ 0.50，Hₐ: p > 0.50（右尾）；n = 25，p̄ = 0.64</div>
+
+<p><b>a. 計算符號檢定的檢定統計量值。</b></p>
+<div class="ans">z = (0.64 − 0.50) / (0.5/√25) = 0.14 / 0.10 = <b>1.40</b></div>
+
+<p><b>b. 計算 p 值。</b></p>
+<div class="ans">右尾 p-value = P(Z ≥ 1.40) = <b>0.0808</b></div>
+
+<p><b>c. 在 1% 顯著水準下，結論為何？請解釋原因。</b></p>
+<div class="ans">不拒絕 H₀。p-value = 0.0808 > 0.01，在 1% 顯著水準下，結論不顯著。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 58｜符號檢定（配對次序資料）</div>
+<div class="exb">
+符號序列（共20個）：+ + + − + + − + + + + − + + − − + + + +<br>
+正號 15 個，負號 5 個；n = 20，p̄ = 15/20 = 0.75
+</div>
+
+<p><b>a. 指定競爭假設，以判斷負號比例與正號比例是否不同。</b></p>
+<div class="ans">H₀: p = 0.50；Hₐ: p ≠ 0.50（雙尾）</div>
+
+<p><b>b. 計算符號檢定的檢定統計量值。</b></p>
+<div class="ans">z = (0.75 − 0.50) / (0.5/√20) = 0.25 / 0.11180 = <b>2.2361</b></div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">雙尾 p-value = 2 × P(Z ≥ 2.2361) ≈ 2 × 0.0127 = <b>0.0254</b></div>
+
+<p><b>d. 在 5% 顯著水準下，結論為何？請解釋原因。</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0254 &lt; 0.05，在 5% 顯著水準下，正號比例顯著不等於 50%。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 60｜符號檢定（總統評分）</div>
+<div class="exb">
+100位選民：70人第二次評分低於第一次（負號），30人高於第一次（正號）<br>
+（設 p = 正號比例；n = 100，p̄ = 0.30）
+</div>
+
+<p><b>a. 使用符號檢定，指定競爭假設以判斷總統評分是否顯著下降。</b></p>
+<div class="ans">H₀: p ≥ 0.50；Hₐ: p &lt; 0.50（左尾）<br>
+評分下降 → 多數人評分降低 → 正號（今年較高者）偏少 → p &lt; 0.50</div>
+
+<p><b>b. 計算檢定統計量值。</b></p>
+<div class="ans">z = (0.30 − 0.50) / (0.5/√100) = −0.20 / 0.05 = <b>−4.00</b></div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">左尾 p-value = P(Z ≤ −4.00) ≈ <b>0.0000（極小）</b></div>
+
+<p><b>d. 在 5% 顯著水準下，數據是否顯示總統評分顯著下降？</b></p>
+<div class="ans">拒絕 H₀。p-value ≈ 0 &lt; 0.05，在 5% 顯著水準下，總統評分確實顯著下降。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 62｜符號檢定（飲食計劃與膽固醇）</div>
+<div class="exb">
+60位參與者：40位膽固醇降低，18位升高，2位無變化<br>
+（設 p = 正號比例 = 「膽固醇升高」比例；丟棄2個並列，n = 58，p̄ = 18/58 = 0.3103）
+</div>
+
+<p><b>a. 使用符號檢定，指定競爭假設以檢驗計劃聲稱（顯著降低膽固醇）。</b></p>
+<div class="ans">H₀: p ≥ 0.50；Hₐ: p &lt; 0.50（左尾）<br>
+若計劃有效，膽固醇升高者（正號）應少於一半。</div>
+
+<p><b>b. 計算檢定統計量值。</b></p>
+<div class="ans">z = (0.3103 − 0.50) / (0.5/√58) = −0.1897 / 0.06565 = <b>−2.890</b></div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">左尾 p-value = P(Z ≤ −2.890) ≈ <b>0.0019</b></div>
+
+<p><b>d. 在 5% 顯著水準下，數據是否支持計劃的聲稱？請解釋原因。</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0019 &lt; 0.05，數據支持計劃的聲稱，膽固醇確實顯著降低。</div>
+</div>
+
+<!-- ===== 習題 20.6 ===== -->
+<h2 id="ex206">習題 20.6（連串檢定）</h2>
+
+<div class="fbox">
+<div class="title">解題流程提醒</div>
+連串檢定步驟：①數 n₁、n₂、R → ②算 μ<sub>R</sub>、σ<sub>R</sub> → ③算 z → ④查雙尾 p-value
+</div>
+
+<div class="exbox">
+<div class="exh">習題 65｜連串檢定</div>
+<div class="exb">n₁ = 24，n₂ = 28，R = 18（n = 52）</div>
+
+<p><b>a. 指定競爭假設以檢定非隨機性。</b></p>
+<div class="ans">H₀: 元素以隨機順序出現；Hₐ: 元素不以隨機順序出現（雙尾）</div>
+
+<p><b>b. 計算連串檢定的檢定統計量值。</b></p>
+<div class="ans">
+μ<sub>R</sub> = 2×24×28/52 + 1 = 25.846 + 1 = 26.846<br>
+σ<sub>R</sub> = √[2×24×28×(2×24×28−52) / (52²×51)] = √[1344×1292/137,904] = √12.592 = 3.549<br>
+z = (18 − 26.846) / 3.549 = <b>−2.493</b>
+</div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">雙尾 p-value = 2 × P(Z ≤ −2.493) ≈ 2 × 0.0063 = <b>0.0127</b></div>
+
+<p><b>d. 在 5% 顯著水準下，觀測值是否為非隨機？</b></p>
+<div class="ans">拒絕 H₀。p-value = 0.0127 &lt; 0.05，觀測值不是隨機出現的。R = 18 遠小於 μ<sub>R</sub> ≈ 26.8，代表同類別傾向聚集，存在規律趨勢。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 67｜連串檢定（原始序列）</div>
+<div class="exb">
+序列：BBAABAABBABABBBABBAAABABBABBABA（31個元素）<br>
+n<sub>B</sub> = 17，n<sub>A</sub> = 14；連串數 R = 20
+</div>
+
+<p><b>在 5% 顯著水準下，進行假設檢定以判斷結果是否為非隨機。</b></p>
+<div class="ans">
+H₀: 元素隨機出現；Hₐ: 元素不隨機出現<br>
+μ<sub>R</sub> = 2×17×14/31 + 1 = 15.355 + 1 = 16.355<br>
+σ<sub>R</sub> = √[2×17×14×(476−31) / (31²×30)] = √[476×445/28,830] = √7.346 = 2.710<br>
+z = (20 − 16.355) / 2.710 = <b>1.345</b><br>
+雙尾 p-value = 2 × P(Z ≥ 1.345) ≈ 2 × 0.0893 = <b>0.1786</b><br>
+不拒絕 H₀。p-value = 0.1786 > 0.05，在 5% 顯著水準下，序列元素呈隨機出現。
+</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 69｜連串檢定（硬幣序列）</div>
+<div class="exb">
+序列：T T H T T T H H T H T T T H T T T H H T H T H T H（25次）<br>
+n<sub>T</sub> = 15，n<sub>H</sub> = 10；連串數 R = 16
+</div>
+
+<p><b>a. 指定競爭假設以檢定賭徒的非隨機性猜測。</b></p>
+<div class="ans">H₀: 硬幣序列隨機出現；Hₐ: 硬幣序列不隨機出現（雙尾）</div>
+
+<p><b>b. 計算連串檢定的檢定統計量值。</b></p>
+<div class="ans">
+μ<sub>R</sub> = 2×15×10/25 + 1 = 12 + 1 = 13<br>
+σ<sub>R</sub> = √[2×15×10×(300−25) / (25²×24)] = √[300×275/15,000] = √5.5 = 2.345<br>
+z = (16 − 13) / 2.345 = <b>1.279</b>
+</div>
+
+<p><b>c. 計算 p 值。</b></p>
+<div class="ans">雙尾 p-value = 2 × P(Z ≥ 1.279) ≈ 2 × 0.1004 = <b>0.2008</b></div>
+
+<p><b>d. 在 5% 顯著水準下，賭徒的猜測是否被數據支持？</b></p>
+<div class="ans">不拒絕 H₀。p-value = 0.2008 > 0.05，在 5% 顯著水準下，無法結論硬幣為非隨機，賭徒的猜測不被數據支持。</div>
+<div class="note">連串檢定永遠是雙尾，只能測試「是否隨機」，無法測試「某面出現機率是否偏高」（那是比例檢定）。</div>
+</div>
+
+<div class="exbox">
+<div class="exh">習題 70｜連串檢定（電腦亂數，奇偶分類）</div>
+<div class="exb">
+序列：5 3 4 6 8 0 2 9 7 7 1 6 8 3 1 5 2 4 3 3 9 2（22個數字）<br>
+分類：O O E E E E E O O O O E E O O O E E O O O E<br>
+n<sub>O</sub> = 12，n<sub>E</sub> = 10；連串：OO|EEEEE|OOOO|EE|OOO|EE|OOO|E → R = 8
+</div>
+
+<p><b>a. 指定競爭假設以檢定非隨機性。</b></p>
+<div class="ans">H₀: 奇偶數以隨機順序出現；Hₐ: 奇偶數不以隨機順序出現（雙尾）</div>
+
+<p><b>b. 計算連串檢定的檢定統計量值。</b></p>
+<div class="ans">
+μ<sub>R</sub> = 2×12×10/22 + 1 = 10.909 + 1 = 11.909<br>
+σ<sub>R</sub> = √[2×12×10×(240−22) / (22²×21)] = √[240×218/10,164] = √5.148 = 2.269<br>
+z = (8 − 11.909) / 2.269 = <b>−1.723</b>
+</div>
+
+<p><b>c. 在 1% 顯著水準下，電腦程式是否運作不正常？請解釋原因。</b></p>
+<div class="ans">不拒絕 H₀。雙尾 p-value = 2 × P(Z ≤ −1.723) ≈ 0.0850 > 0.01，在 1% 顯著水準下，無法結論電腦程式運作不正常。</div>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>
